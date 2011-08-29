@@ -1,0 +1,137 @@
+= PerfectSched
+
+Highly available distributed cron works with PerfectQueue.
+
+It provides exactly-once semantics unless backend database fails. Registered schedules are surely pushed to a queue provided by PerfectQueue every time in order.
+
+You can register, modify and delete schedules using the command line utility or library API.
+
+Backend database is pluggable. PerfectSched supports RDBMS and Amazon SimpleDB for now.
+
+
+== Architecture
+
+PerfectSched uses following database schema:
+
+  (
+    id:string        -- unique identifier of the schedule
+    data:blob        -- additional attributes to be pushed to PerfectQueue
+    next_time:int    -- unix time of the next schedule
+    cron:string      -- description of the schedule
+    delay:int        -- delay time before running a schedule
+    timeout:int
+  )
+
+1. list: lists tasks whose timeout column is old enough.
+2. lock: updates timeout column of the first task
+3. push: push a message to the PerfectQueue
+4. update: if it succeeded, updates the next_time and timeout columns
+5. or leave: if it failed, leave the row and expect to be retried.
+
+
+=== Cooperation with PerfectQueue
+
+PerfectSched pushes a task to PerfectQueue every time on schedule. The ID of the task becomes "<id of the scuedule>.<unix time of the schedule>". For example, the identifier of the schedule is "my-sched", and a schedule runs at "2011-08-30 00:00:00 UTC" (1314662400 in UNIX TIME), the ID of the task is "my-sched.1314662400". The data of the task is same as the schedule.
+
+
+== Library usage
+
+=== Adding a schedule
+
+  require 'perfectsched'
+  
+  # RDBMS
+  require 'perfectsched/backend/rdb'
+  sched = PerfectSched::Backend::RDBBackend.new(
+         'mysql://user:password@localhost/mydb', table='perfectsched')
+
+  # SimpleDB
+  require 'perfectsched/backend/simpledb'
+  sched = PerfectSched::Backend::SimpleDBBackend.new(
+         'AWS_KEY_ID', 'AWS_SECRET_KEY', 'your-simpledb-domain-name')
+  
+  id = 'unique-key-id'
+  cron = "* * * * *"
+  delay = 0
+  data = '{"any":"data"}'
+  start = Time.now.to_i
+  sched.add(id, cron, delay, data, start)
+
+=== Deleting a schedule
+
+  sched.delete(id)
+
+=== Modifying a schedule
+
+  cron = "* * * * 0"
+  delay = 10
+  sched.modify_sched(id, cron, delay)
+
+  data = '{"user":1}'
+  sched.modify_data(id, data)
+
+  sched.modify(id, cron, delay, data)
+
+
+
+== Command line usage
+
+  Usage: perfectsched [options]
+          --setup PATH.yaml            Write example configuration file
+      -f, --file PATH.yaml             Set path to the configuration file
+  
+          --list                       Show registered schedule
+          --delete ID                  Delete a registered schedule
+  
+          --add <ID> <CRON> <DATA>     Register a schedule
+      -d, --delay SEC                  Delay time before running a schedule (default: 0)
+      -s, --start UNIXTIME             Start time to run a schedule (default: now)
+  
+      -S, --modify-sched <ID> <CRON>   Modify schedule of a registered schedule
+      -D, --modify-delay <ID> <DELAY>  Modify delay of a registered schedule
+      -J, --modify-data <ID> <DATA>    Modify data of a registered schedule
+  
+      -b, --daemon PIDFILE             Daemonize (default: foreground)
+      -o, --log PATH                   log file path
+      -v, --verbose                    verbose mode
+
+
+=== Configuration
+
+First of all, create a configuration file:
+
+  $ perfectsched --setup config.yaml
+  $ edit config.yaml
+
+
+=== Adding a schedule
+
+  $ perfectsched -f config.yaml --add unique-key-id "* * * * *" '{"any":"data"}'
+
+
+=== Deleting a schedule
+
+  $ perfectsched -f config.yaml --delete unique-key-id
+
+
+=== Modifying a schedule
+
+  $ perfectsched -f config.yaml --modify-sched unique-key-id "* * * * 0"
+  $ perfectsched -f config.yaml --modify-delay unique-key-id 10
+  $ perfectsched -f config.yaml --modify-data unique-key-id '{"user":1}'
+
+
+=== Listing registered schedules
+
+  $ perfectsched -f config.yaml --list
+                          id             schedule    delay                  next time                   next run  data
+                       test1            * * * * *        0  2011-08-30 01:29:42 +0900  2011-08-30 01:29:42 +0900  {"attr1":"val1","attr":"val2"}
+  1 entries.
+
+
+=== Running a scheduler
+
+  $ perfectsched -f config.yaml
+
+It's recommended to run the scheduler on several servers for availability.
+
