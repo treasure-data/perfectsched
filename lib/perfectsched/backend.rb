@@ -15,10 +15,6 @@ class Task
 end
 
 
-class DeletedError < RuntimeError
-end
-
-
 class Backend
   def initialize
     @croncalc = CronCalc.new

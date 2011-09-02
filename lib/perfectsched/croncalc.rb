@@ -5,6 +5,7 @@ module PerfectSched
 class CronCalc
   def initialize
     require 'cron-spec'
+    # TODO optimize
   end
 
   def next_time(cron, time)

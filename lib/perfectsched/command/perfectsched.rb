@@ -27,7 +27,7 @@ op.on('--setup PATH.yaml', 'Write example configuration file') {|s|
 }
 
 op.on('-f', '--file PATH.yaml', 'Set path to the configuration file') {|s|
-  conf[:file] = s
+  (conf[:files] ||= []) << s
 }
 
 op.separator("")
@@ -100,36 +100,39 @@ end
 begin
   op.parse!(ARGV)
 
-  if type == :add
+  type ||= :run
+
+  case type
+  case :add
     if ARGV.length != 2
       usage nil
     end
     add_conf[:cron] = ARGV[0]
     add_conf[:data] = ARGV[1]
 
-  elsif type == :modify_sched
+  when :modify_sched
     if ARGV.length != 1
       usage nil
     end
     add_conf[:cron] = ARGV[0]
 
-  elsif type == :modify_data
+  when :modify_data
     if ARGV.length != 1
       usage nil
     end
     add_conf[:data] = ARGV[0]
 
-  elsif type == :modify_delay
+  when :modify_delay
     if ARGV.length != 1 || ARGV[0].to_i.to_s != ARGV[0]
       usage nil
     end
     add_conf[:delay] = ARGV[0].to_i
 
-  elsif ARGV.length != 0
-    usage nil
+  else
+    if ARGV.length != 0
+      usage nil
+    end
   end
-
-  type ||= :run
 
   if confout
     require 'yaml'
@@ -156,7 +159,7 @@ EOF
     exit 0
   end
 
-  unless conf[:file]
+  unless conf[:files]
     raise "-f, --file PATH.yaml option is required"
   end
 
@@ -169,10 +172,12 @@ require 'perfectsched'
 require 'perfectqueue'
 
 require 'yaml'
-yaml = YAML.load File.read(conf[:file])
-
-yaml.each_pair {|k,v|
-  conf[k.to_sym] = v
+docs = ''
+conf[:files].each {|file|
+  docs << File.read(file)
+}
+YAML.load_documents(docs) {|yaml|
+  yaml.each_pair {|k,v| conf[k.to_sym] = v }
 }
 
 conf[:timeout] ||= 60
