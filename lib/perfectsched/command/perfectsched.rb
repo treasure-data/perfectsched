@@ -103,7 +103,7 @@ begin
   type ||= :run
 
   case type
-  case :add
+  when :add
     if ARGV.length != 2
       usage nil
     end
@@ -184,7 +184,7 @@ conf[:timeout] ||= 60
 conf[:poll_interval] ||= 1
 
 # backend
-bconf = yaml['backend']
+bconf = conf[:backend]
 if domain = bconf['simpledb']
   require 'perfectsched/backend/simpledb'
   key_id = bconf['aws_key_id'] || ENV['AWS_ACCESS_KEY_ID']
@@ -205,7 +205,7 @@ else
 end
 
 # queue
-bconf = yaml['queue']
+bconf = conf[:queue]
 if domain = bconf['simpledb']
   require 'perfectqueue/backend/simpledb'
   key_id = bconf['aws_key_id'] || ENV['AWS_ACCESS_KEY_ID']
