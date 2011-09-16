@@ -205,21 +205,23 @@ else
 end
 
 # queue
-bconf = conf[:queue]
-if domain = bconf['simpledb']
-  require 'perfectqueue/backend/simpledb'
-  key_id = bconf['aws_key_id'] || ENV['AWS_ACCESS_KEY_ID']
-  secret_key = bconf['aws_secret_key'] || ENV['AWS_SECRET_ACCESS_KEY']
-  queue = PerfectQueue::SimpleDBBackend.new(key_id, secret_key, domain)
+make_queue = Proc.new do
+  bconf = conf[:queue]
+  if domain = bconf['simpledb']
+    require 'perfectqueue/backend/simpledb'
+    key_id = bconf['aws_key_id'] || ENV['AWS_ACCESS_KEY_ID']
+    secret_key = bconf['aws_secret_key'] || ENV['AWS_SECRET_ACCESS_KEY']
+    queue = PerfectQueue::SimpleDBBackend.new(key_id, secret_key, domain)
 
-elsif uri = bconf['database']
-  require 'perfectqueue/backend/rdb'
-  table = bconf['table'] || "perfectqueue"
-  queue = PerfectQueue::RDBBackend.new(uri, table)
+  elsif uri = bconf['database']
+    require 'perfectqueue/backend/rdb'
+    table = bconf['table'] || "perfectqueue"
+    queue = PerfectQueue::RDBBackend.new(uri, table)
 
-else
-  $stderr.puts "Invalid configuration file: queue section is required"
-  exit 1
+  else
+    $stderr.puts "Invalid configuration file: queue section is required"
+    exit 1
+  end
 end
 
 require 'logger'
@@ -313,6 +315,7 @@ when :run
     log.level = Logger::INFO
   end
 
+  queue = make_queue.call
   engine = PerfectSched::Engine.new(backend, queue, log, conf)
 
   trap :INT do
