@@ -1,0 +1,11 @@
+
+== 2011-09-16 version 0.7.1
+
+* Supports to read multiple configuration files
+* Fixed command-line launcher
+
+
+== 2011-09-02 version 0.7.0
+
+* First release
+
