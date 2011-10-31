@@ -230,9 +230,10 @@ case type
 when :list
   format = "%26s %20s %8s %26s %26s  %s"
   puts format % ["id", "schedule", "delay", "next time", "next run", "data"]
+  time_format = "%Y-%m-%d %H:%M:%S %z"
   n = 0
   backend.list {|id,cron,delay,data,next_time,timeout|
-    puts format % [id, cron, delay, Time.at(next_time), Time.at(timeout), data]
+    puts format % [id, cron, delay, Time.at(next_time).strftime(time_format), Time.at(timeout).strftime(time_format), data]
     n += 1
   }
   puts "#{n} entries."
