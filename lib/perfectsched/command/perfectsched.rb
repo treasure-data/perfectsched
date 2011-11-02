@@ -308,6 +308,7 @@ when :run
   else
     log_out = STDOUT
   end
+  log_out.sync = true
 
   log = Logger.new(log_out)
   if conf[:verbose]
