@@ -1,4 +1,9 @@
 
+== 2011-11-29 version 0.7.3
+
+* gemspec: replaced '=' dependency into '>=' + '<=' to avoid rubygems+jruby bug
+
+
 == 2011-11-02 version 0.7.2
 
 * Disables logger's buffering
