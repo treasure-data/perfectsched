@@ -12,7 +12,7 @@ begin
     gemspec.homepage = "https://github.com/treasure-data/perfectsched"
     #gemspec.has_rdoc = false
     gemspec.require_paths = ["lib"]
-    gemspec.add_dependency "cron-spec", "= 0.1.2"
+    gemspec.add_dependency "cron-spec", [">= 0.1.2", "<= 0.1.2"]
     gemspec.add_dependency "sequel", "~> 3.26.0"
     gemspec.add_dependency "aws-sdk", "~> 1.1.1"
     gemspec.add_dependency "perfectqueue", "~> 0.7.0"
