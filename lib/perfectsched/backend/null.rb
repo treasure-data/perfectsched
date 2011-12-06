@@ -12,15 +12,15 @@ class NullBackend < Backend
   end
 
   def finish(token, next_time, timeout)
-    false
+    true
   end
 
   def add_checked(id, cron, delay, data, next_time, timeout)
-    nil
+    true
   end
 
   def delete(id)
-    false
+    true
   end
 
   def get(id)
@@ -28,15 +28,15 @@ class NullBackend < Backend
   end
 
   def modify_checked(id, cron, delay, data)
-    false
+    true
   end
 
   def modify_sched_checked(id, cron, delay)
-    false
+    true
   end
 
   def modify_data_checked(id, data)
-    false
+    true
   end
 end
 
