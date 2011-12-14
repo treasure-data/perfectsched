@@ -17,7 +17,9 @@ class BackendTest < Test::Unit::TestCase
 
   def open_backend
     #PerfectSched::SimpleDBBackend.new(ENV['AWS_ACCESS_KEY_ID'], ENV['AWS_SECRET_ACCESS_KEY'], 'perfectsched-test-1').use_consistent_read
-    PerfectSched::RDBBackend.new(DB_URI, "perfectdb_test")
+    db = PerfectSched::RDBBackend.new(DB_URI, "perfectdb_test")
+    db.create_tables
+    db
   end
 
   it 'acquire' do
@@ -176,13 +178,36 @@ class BackendTest < Test::Unit::TestCase
     assert_equal 10, delay
     assert_equal 'data2', data
 
-    ok = db1.modify(key, "* * * * 2", 20, "data3")
+    ok = db1.modify(key, "* * * * 2", 20, "data3", nil)
     assert_equal true, ok
 
     cron, delay, data = db1.get(key)
     assert_equal "* * * * 2", cron
     assert_equal 20, delay
     assert_equal 'data3', data
+  end
+
+  it 'timezone' do
+    clean_backend
+
+    db1 = open_backend
+    time = 1323820800  # 2011-12-14 00:00:00 UTC
+
+    ok = db1.add(@key_prefix+'test1', "0 0 * * *", 0, '', time-60, 'UTC')
+    assert_equal true, ok
+
+    ok = db1.add(@key_prefix+'test2', "0 0 * * *", 0, '', time-60, 'Asia/Tokyo')
+    assert_equal true, ok
+
+    token, task = db1.acquire(time+86400, time)
+    assert_not_equal nil, task
+    assert_equal @key_prefix+'test1', task.id
+    assert_equal time, task.time
+
+    token, task = db1.acquire(time+54000+86400, time+54000)
+    assert_not_equal nil, task
+    assert_equal @key_prefix+'test2', task.id
+    assert_equal time+54000, task.time
   end
 end
 

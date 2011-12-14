@@ -52,6 +52,10 @@ op.on('-d', '--delay SEC', 'Delay time before running a schedule (default: 0)', 
   add_conf[:delay] = i
 }
 
+op.on('-t', '--timezone NAME', 'Set timezone (default: localtime)') {|s|
+  add_conf[:timezone] = s
+}
+
 op.on('-s', '--start UNIXTIME', 'Start time to run a schedule (default: now)', Integer) {|i|
   add_conf[:start] = i
 }
@@ -143,13 +147,13 @@ begin
 timeout: 300
 poll_interval: 1
 backend:
-  database: "mysql://user:password@localhost/mydb"
+  database: "mysql2://user:password@localhost/mydb"
   table: "perfectsched"
   #simpledb: your-simpledb-domain-name-for-scheduler
   #aws_key_id: "AWS_ACCESS_KEY_ID"
   #aws_secret_key: "AWS_SECRET_ACCESS_KEY"
 queue:
-  database: "mysql://user:password@localhost/mydb"
+  database: "mysql2://user:password@localhost/mydb"
   table: "perfectqueue"
   #simpledb: your-simpledb-domain-name-for-queue
   #aws_key_id: "AWS_ACCESS_KEY_ID"
@@ -228,12 +232,12 @@ require 'logger'
 
 case type
 when :list
-  format = "%26s %20s %8s %26s %26s  %s"
-  puts format % ["id", "schedule", "delay", "next time", "next run", "data"]
-  time_format = "%Y-%m-%d %H:%M:%S %z"
+  format = "%26s %18s %8s %20s %20s %20s  %s"
+  puts format % ["id", "schedule", "delay", "next time", "next run", "timezone", "data"]
+  time_format = "%Y-%m-%d %H:%M:%S"
   n = 0
-  backend.list {|id,cron,delay,data,next_time,timeout|
-    puts format % [id, cron, delay, Time.at(next_time).strftime(time_format), Time.at(timeout).strftime(time_format), data]
+  backend.list {|id,cron,delay,data,next_time,timeout,timezone|
+    puts format % [id, cron, delay, Time.at(next_time).utc.strftime(time_format), Time.at(timeout).utc.strftime(time_format), timezone, data]
     n += 1
   }
   puts "#{n} entries."
@@ -252,8 +256,9 @@ when :add
   data = add_conf[:data]
   delay = add_conf[:delay]
   start = add_conf[:start] || Time.now.to_i
+  timezone = add_conf[:timezone]
 
-  added = backend.add(id, cron, delay, data, start)
+  added = backend.add(id, cron, delay, data, start, timezone)
   if added
     puts "Schedule id=#{id} is added."
   else
@@ -262,7 +267,7 @@ when :add
   end
 
 when :modify_sched, :modify_delay, :modify_data
-  cron, delay, data = backend.get(id)
+  cron, delay, data, timezone = backend.get(id)
   unless cron
     puts "Schedule id=#{id} does not exist."
     exit 1

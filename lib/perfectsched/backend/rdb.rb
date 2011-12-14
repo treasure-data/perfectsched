@@ -15,37 +15,25 @@ class RDBBackend < Backend
     }
   end
 
-  private
-  #def init_db(type)
-  #  sql = ''
-  #  case type
-  #  when /mysql/i
-  #    sql << "CREATE TABLE IF NOT EXISTS `#{@table}` ("
-  #    sql << "  id VARCHAR(256) NOT NULL,"
-  #    sql << "  timeout INT NOT NULL,"
-  #    sql << "  next_time INT NOT NULL,"
-  #    sql << "  cron VARCHAR(128) NOT NULL,"
-  #    sql << "  delay INT NOT NULL,"
-  #    sql << "  data BLOB NOT NULL,"
-  #    sql << "  PRIMARY KEY (id)"
-  #    sql << ") ENGINE=INNODB;"
-  #  else
-  #    sql << "CREATE TABLE IF NOT EXISTS `#{@table}` ("
-  #    sql << "  id VARCHAR(256) NOT NULL,"
-  #    sql << "  timeout INT NOT NULL,"
-  #    sql << "  next_time INT NOT NULL,"
-  #    sql << "  cron VARCHAR(128) NOT NULL,"
-  #    sql << "  delay INT NOT NULL,"
-  #    sql << "  data BLOB NOT NULL,"
-  #    sql << "  PRIMARY KEY (id)"
-  #    sql << ");"
-  #  end
-  #  # TODO index
-  #  connect {
-  #    @db.run sql
-  #  }
-  #end
+  def create_tables
+    sql = ''
+    sql << "CREATE TABLE IF NOT EXISTS `#{@table}` ("
+    sql << "  id VARCHAR(256) NOT NULL,"
+    sql << "  timeout INT NOT NULL,"
+    sql << "  next_time INT NOT NULL,"
+    sql << "  cron VARCHAR(128) NOT NULL,"
+    sql << "  delay INT NOT NULL,"
+    sql << "  data BLOB NOT NULL,"
+    sql << "  timezone VARCHAR(256) NULL,"
+    sql << "  PRIMARY KEY (id)"
+    sql << ");"
+    # TODO index
+    connect {
+      @db.run sql
+    }
+  end
 
+  private
   def connect(&block)
     begin
       block.call
@@ -56,8 +44,8 @@ class RDBBackend < Backend
 
   public
   def list(&block)
-    @db.fetch("SELECT id, timeout, next_time, cron, delay, data FROM `#{@table}` ORDER BY timeout ASC") {|row|
-      yield row[:id], row[:cron], row[:delay], row[:data], row[:next_time], row[:timeout]
+    @db.fetch("SELECT id, timeout, next_time, cron, delay, data, timezone FROM `#{@table}` ORDER BY timeout ASC") {|row|
+      yield row[:id], row[:cron], row[:delay], row[:data], row[:next_time], row[:timeout], row[:timezone]
     }
   end
 
@@ -67,12 +55,12 @@ class RDBBackend < Backend
     connect {
       while true
         rows = 0
-        @db.fetch("SELECT id, timeout, next_time, cron, delay, data FROM `#{@table}` WHERE timeout <= ? ORDER BY timeout ASC LIMIT #{MAX_SELECT_ROW};", now) {|row|
+        @db.fetch("SELECT id, timeout, next_time, cron, delay, data, timezone FROM `#{@table}` WHERE timeout <= ? ORDER BY timeout ASC LIMIT #{MAX_SELECT_ROW};", now) {|row|
 
           n = @db["UPDATE `#{@table}` SET timeout=? WHERE id=? AND timeout=?;", timeout, row[:id], row[:timeout]].update
           salt = timeout
           if n > 0
-            return [row[:id],salt], Task.new(row[:id], row[:next_time], row[:cron], row[:delay], row[:data])
+            return [row[:id],salt], Task.new(row[:id], row[:next_time], row[:cron], row[:delay], row[:data], row[:timezone])
           end
 
           rows += 1
@@ -92,10 +80,10 @@ class RDBBackend < Backend
     }
   end
 
-  def add_checked(id, cron, delay, data, next_time, timeout)
+  def add_checked(id, cron, delay, data, next_time, timeout, timezone)
     connect {
       begin
-        n = @db["INSERT INTO `#{@table}` (id, timeout, next_time, cron, delay, data) VALUES (?, ?, ?, ?, ?, ?);", id, timeout, next_time, cron, delay, data].insert
+        n = @db["INSERT INTO `#{@table}` (id, timeout, next_time, cron, delay, data, timezone) VALUES (?, ?, ?, ?, ?, ?, ?);", id, timeout, next_time, cron, delay, data, timezone].insert
         return true
       rescue Sequel::DatabaseError
         return nil
@@ -112,16 +100,16 @@ class RDBBackend < Backend
 
   def get(id)
     connect {
-      @db.fetch("SELECT id, timeout, next_time, cron, delay, data FROM `#{@table}` WHERE id=?;", id) {|row|
-        return row[:cron], row[:delay], row[:data]
+      @db.fetch("SELECT id, timeout, next_time, cron, delay, data, timezone FROM `#{@table}` WHERE id=?;", id) {|row|
+        return row[:cron], row[:delay], row[:data], row[:timezone]
       }
       return nil
     }
   end
 
-  def modify_checked(id, cron, delay, data)
+  def modify_checked(id, cron, delay, data, timezone)
     connect {
-      n = @db["UPDATE `#{@table}` SET cron=?, delay=?, data=? WHERE id=?;", cron, delay, data, id].update
+      n = @db["UPDATE `#{@table}` SET cron=?, delay=?, data=?, timezone=? WHERE id=?;", cron, delay, data, timezone, id].update
       return n > 0
     }
   end

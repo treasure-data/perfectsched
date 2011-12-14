@@ -28,7 +28,7 @@ class SimpleDBBackend < Backend
 
   def list(&block)
     rows = 0
-    @domain.items.select('timeout', 'next_time', 'cron', 'delay', 'data',
+    @domain.items.select('timeout', 'next_time', 'cron', 'delay', 'data', 'timezone',
                         :where => "timeout > '#{int_encode(0)}'",  # required by SimpleDB
                         :order => [:timeout, :asc],
                         :consistent_read => @consistent_read,
@@ -40,9 +40,10 @@ class SimpleDBBackend < Backend
       cron = attrs['cron'].first
       delay = int_decode(attrs['delay'].first)
       data = attrs['data'].first
+      timezone = attrs['timezone'].first
       timeout = int_decode(attrs['timeout'].first)
 
-      yield id, cron, delay, data, next_time, timeout
+      yield id, cron, delay, data, next_time, timeout, timezone
     }
   end
 
@@ -51,7 +52,7 @@ class SimpleDBBackend < Backend
   def acquire(timeout, now=Time.now.to_i)
     while true
       rows = 0
-      @domain.items.select('timeout', 'next_time', 'cron', 'delay', 'data',
+        @domain.items.select('timeout', 'next_time', 'cron', 'delay', 'data', 'timezone',
                           :where => "timeout <= '#{int_encode(now)}'",
                           :order => [:timeout, :asc],
                           :consistent_read => @consistent_read,
@@ -67,9 +68,10 @@ class SimpleDBBackend < Backend
           cron = attrs['cron'].first
           delay = int_decode(attrs['delay'].first)
           data = attrs['data'].first
+          timezone = attrs['timezone'].first
           salt = int_encode(timeout)
 
-          return [id,salt], Task.new(id, next_time, cron, delay, data)
+          return [id,salt], Task.new(id, next_time, cron, delay, data, timezone)
 
         rescue AWS::SimpleDB::Errors::ConditionalCheckFailed, AWS::SimpleDB::Errors::AttributeDoesNotExist
         end
@@ -93,11 +95,17 @@ class SimpleDBBackend < Backend
     end
   end
 
-  def add_checked(id, cron, delay, data, next_time, timeout)
+  def add_checked(id, cron, delay, data, next_time, timeout, timezone)
     begin
-      @domain.items[id].attributes.replace('timeout'=>int_encode(timeout), 'next_time'=>int_encode(next_time),
-          'cron'=>cron, 'delay'=>int_encode(delay), 'data'=>data,
-          :unless=>'timeout')
+      hash = {}
+      hash['timeout'] = int_encode(timeout)
+      hash['next_time'] = int_encode(next_time)
+      hash['cron'] = cron
+      hash['delay'] = int_encode(delay)
+      hash['data'] = data
+      hash['timezone'] = timezone if timezone
+      hash[:unless] = 'timeout'
+      @domain.items[id].attributes.replace()
       return true
     rescue AWS::SimpleDB::Errors::ConditionalCheckFailed, AWS::SimpleDB::Errors::ExistsAndExpectedValue
       return nil
@@ -122,14 +130,15 @@ class SimpleDBBackend < Backend
     end
     delay = int_decode(attrs['delay'].first)
     data = attrs['data'].first
-    return cron, delay, data
+    timezone = attrs['timezone'].first
+    return cron, delay, data, timezone
   end
 
-  def modify_checked(id, cron, delay, data)
+  def modify_checked(id, cron, delay, data, timezone)
     unless get(id)
       return false
     end
-    @domain.items[id].attributes.replace('cron'=>cron, 'delay'=>int_encode(delay), 'data'=>data)
+    @domain.items[id].attributes.replace('cron'=>cron, 'delay'=>int_encode(delay), 'data'=>data, 'timezone'=>timezone)
     return true
   end
 

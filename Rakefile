@@ -16,6 +16,7 @@ begin
     gemspec.add_dependency "sequel", "~> 3.26.0"
     gemspec.add_dependency "aws-sdk", "~> 1.1.1"
     gemspec.add_dependency "perfectqueue", "~> 0.7.0"
+    gemspec.add_dependency "tzinfo", "~> 0.3.29"
     gemspec.test_files = Dir["test/**/*.rb", "test/**/*.sh"]
     gemspec.files = Dir["bin/**/*", "lib/**/*"]
     gemspec.executables = ['perfectsched']

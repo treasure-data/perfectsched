@@ -42,7 +42,7 @@ class Engine
       @queue.submit(id, task.data)
       # ignore already exists error
 
-      next_time = @croncalc.next_time(task.cron, task.time)
+      next_time = @croncalc.next_time(task.cron, task.time, task.timezone)
       next_run = next_time + task.delay
       @backend.finish(token, next_time, next_run)
 
