@@ -15,7 +15,7 @@ class NullBackend < Backend
     true
   end
 
-  def add_checked(id, cron, delay, data, next_time, timeout)
+  def add_checked(id, cron, delay, data, next_time, timeout, timezone)
     true
   end
 
