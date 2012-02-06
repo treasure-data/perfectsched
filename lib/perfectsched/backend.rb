@@ -61,7 +61,7 @@ class Backend
 
   # => true (success) or false (not found)
   def modify_sched(id, cron, delay)
-    cron_, delay_, data_, timezone = get(id)
+    cron_, delay_, data_, timezone, next_time = get(id)
     cron = cron.strip
     @croncalc.next_time(cron, 0, timezone)
     modify_sched_checked(id, cron, delay)

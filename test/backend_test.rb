@@ -157,34 +157,38 @@ class BackendTest < Test::Unit::TestCase
     ok = db1.add(key, "* * * * *", 0, 'data1', time)
     assert_equal true, ok
 
-    cron, delay, data = db1.get(key)
+    cron, delay, data, timezone, next_time = db1.get(key)
     assert_equal "* * * * *", cron
     assert_equal 0, delay
     assert_equal 'data1', data
+    assert_equal time+60, next_time
 
     ok = db1.modify_sched(key, "* * * * 1", 10)
     assert_equal true, ok
 
-    cron, delay, data = db1.get(key)
+    cron, delay, data, timezone, next_time = db1.get(key)
     assert_equal "* * * * 1", cron
     assert_equal 10, delay
     assert_equal 'data1', data
+    assert_equal time+60, next_time
 
     ok = db1.modify_data(key, "data2")
     assert_equal true, ok
 
-    cron, delay, data = db1.get(key)
+    cron, delay, data, timezone, next_time = db1.get(key)
     assert_equal "* * * * 1", cron
     assert_equal 10, delay
     assert_equal 'data2', data
+    assert_equal time+60, next_time
 
     ok = db1.modify(key, "* * * * 2", 20, "data3", nil)
     assert_equal true, ok
 
-    cron, delay, data = db1.get(key)
+    cron, delay, data, timezone, next_time = db1.get(key)
     assert_equal "* * * * 2", cron
     assert_equal 20, delay
     assert_equal 'data3', data
+    assert_equal time+60, next_time
   end
 
   it 'timezone' do
