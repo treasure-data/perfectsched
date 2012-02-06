@@ -101,7 +101,7 @@ class RDBBackend < Backend
   def get(id)
     connect {
       @db.fetch("SELECT id, timeout, next_time, cron, delay, data, timezone FROM `#{@table}` WHERE id=?;", id) {|row|
-        return row[:cron], row[:delay], row[:data], row[:timezone]
+        return row[:cron], row[:delay], row[:data], row[:timezone], row[:next_time]
       }
       return nil
     }

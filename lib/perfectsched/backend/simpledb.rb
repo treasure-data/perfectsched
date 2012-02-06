@@ -131,7 +131,8 @@ class SimpleDBBackend < Backend
     delay = int_decode(attrs['delay'].first)
     data = attrs['data'].first
     timezone = attrs['timezone'].first
-    return cron, delay, data, timezone
+    next_time = int_decode(attrs['next_time'].first)
+    return cron, delay, data, timezone, next_time
   end
 
   def modify_checked(id, cron, delay, data, timezone)
