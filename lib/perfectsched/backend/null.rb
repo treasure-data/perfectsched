@@ -27,7 +27,7 @@ class NullBackend < Backend
     nil
   end
 
-  def modify_checked(id, cron, delay, data)
+  def modify_checked(id, cron, delay, data, timezone)
     true
   end
 
