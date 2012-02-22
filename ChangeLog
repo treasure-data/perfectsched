@@ -1,4 +1,9 @@
 
+== 2012-02-21 version 0.7.10
+
+* Fixed NullBackend#modify_checked
+
+
 == 2012-02-09 version 0.7.9
 
 * Backend#get returns next_time
