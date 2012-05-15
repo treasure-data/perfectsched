@@ -17,33 +17,16 @@
 #
 
 module PerfectSched
-  module Backend
-    def self.new_backend(client, config)
-      case config[:type]
-      when nil
-        raise ConfigError, "'type' option is not set"
-      when 'rdb_compat'
-        require_backend('rdb_compat')
-        RDBCompatBackend.new(client, config)
+  module Application
+
+    class Base
+      attr_accessor :task
+
+      def schedules
+        ScheduleCollection.new(task.client)
       end
     end
 
-    def self.require_backend(fname)
-      require File.expand_path("backend/#{fname}", File.dirname(__FILE__))
-    end
-  end
-
-  module BackendHelper
-    def initialize(client, config)
-      @client = client
-      @config = config
-    end
-
-    attr_reader :client
-
-    def close
-      # do nothing by default
-    end
   end
 end
 

@@ -17,33 +17,30 @@
 #
 
 module PerfectSched
-  module Backend
-    def self.new_backend(client, config)
-      case config[:type]
-      when nil
-        raise ConfigError, "'type' option is not set"
-      when 'rdb_compat'
-        require_backend('rdb_compat')
-        RDBCompatBackend.new(client, config)
-      end
+
+  class Task < ScheduleWithMetadata
+    include Model
+
+    def initialize(client, key, attributes, scheduled_time, task_token)
+      super(client, key, attributes)
+      @scheduled_time = scheduled_time
+      @task_token = task_token
     end
 
-    def self.require_backend(fname)
-      require File.expand_path("backend/#{fname}", File.dirname(__FILE__))
-    end
-  end
+    attr_reader :scheduled_time
 
-  module BackendHelper
-    def initialize(client, config)
-      @client = client
-      @config = config
+    def release!(options={})
+      @client.release(@task_token, options)
     end
 
-    attr_reader :client
+    def retry!(options={})
+      @client.retry(@task_token, options)
+    end
 
-    def close
-      # do nothing by default
+    def finish!(options={})
+      @client.finish(@task_token, options)
     end
   end
+
 end
 

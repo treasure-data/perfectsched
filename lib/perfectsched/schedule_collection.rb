@@ -17,33 +17,42 @@
 #
 
 module PerfectSched
-  module Backend
-    def self.new_backend(client, config)
-      case config[:type]
-      when nil
-        raise ConfigError, "'type' option is not set"
-      when 'rdb_compat'
-        require_backend('rdb_compat')
-        RDBCompatBackend.new(client, config)
+
+  class ScheduleCollection
+    include Model
+
+    def initialize(client)
+      super(client)
+    end
+
+    # => Schedule
+    def [](key)
+      Schedule.new(@client, key)
+    end
+
+    def list(options={}, &block)
+      @client.list(options, &block)
+    end
+
+    def poll(options={})
+      options = options.merge({:max_acquire=>1})
+      if acquired = poll_multi(options)
+        return acquired[0]
       end
+      return nil
     end
 
-    def self.require_backend(fname)
-      require File.expand_path("backend/#{fname}", File.dirname(__FILE__))
-    end
-  end
-
-  module BackendHelper
-    def initialize(client, config)
-      @client = client
-      @config = config
+    def poll_multi(options={})
+      @client.acquire(options)
     end
 
-    attr_reader :client
-
-    def close
-      # do nothing by default
+    # :data => Hash
+    # :cron
+    # :timezone
+    def submit(key, type, options={})
+      @client.submit(key, type, options)
     end
   end
+
 end
 
