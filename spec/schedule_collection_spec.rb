@@ -12,26 +12,26 @@ describe ScheduleCollection do
     @sc.class.should == PerfectSched::ScheduleCollection
   end
 
-  it 'succeess submit' do
-    @sc.submit('sched01', 't01', {:cron=>'* * * * *', :timezone=>'UTC'})
+  it 'succeess add' do
+    @sc.add('sched01', 't01', {:cron=>'* * * * *', :timezone=>'UTC'})
   end
 
-  it 'fail duplicated submit' do
-    @sc.submit('sched01', 't01', {:cron=>'* * * * *', :timezone=>'UTC'})
+  it 'fail duplicated add' do
+    @sc.add('sched01', 't01', {:cron=>'* * * * *', :timezone=>'UTC'})
 
     lambda {
-      @sc.submit('sched01', 't01', {:cron=>'* * * * *', :timezone=>'UTC'})
+      @sc.add('sched01', 't01', {:cron=>'* * * * *', :timezone=>'UTC'})
     }.should raise_error AlreadyExistsError
 
     @sc['sched01'].delete!
 
-    @sc.submit('sched01', 't01', {:cron=>'* * * * *', :timezone=>'UTC'})
+    @sc.add('sched01', 't01', {:cron=>'* * * * *', :timezone=>'UTC'})
   end
 
   it 'acquire' do
     time = 1323820800  # 2011-12-14 00:00:00 UTC
 
-    s01 = @sc.submit('sched01', 't01', :cron=>"* * * * *", :data=>{'k'=>1}, :next_time=>time)
+    s01 = @sc.add('sched01', 't01', :cron=>"* * * * *", :data=>{'k'=>1}, :next_time=>time)
 
     t01 = @sc.poll(:alive_time=>120, :now=>time)
     t01.key.should == 'sched01'
@@ -58,11 +58,11 @@ describe ScheduleCollection do
   it 'timezone' do
     time = 1323820800  # 2011-12-14 00:00:00 UTC
 
-    s01 = @sc.submit('sched01', 't01', :cron=>"0 0 * * *", :next_time=>time-60, :timezone=>'UTC')
+    s01 = @sc.add('sched01', 't01', :cron=>"0 0 * * *", :next_time=>time-60, :timezone=>'UTC')
     #s01.class.should == Schedule
     #s01.key.should == 'sched01'
 
-    s02 = @sc.submit('sched02', 't01', :cron=>"0 0 * * *", :next_time=>time-60, :timezone=>'Asia/Tokyo')
+    s02 = @sc.add('sched02', 't01', :cron=>"0 0 * * *", :next_time=>time-60, :timezone=>'Asia/Tokyo')
     #s02.class.should == Schedule
     #s02.key.should == 'sched02'
 
@@ -82,7 +82,7 @@ describe ScheduleCollection do
   it 'delay' do
     time = 1323820800  # 2011-12-14 00:00:00 UTC
 
-    s01 = @sc.submit('sched01', 't01', :cron=>"0 * * * *", :delay=>30, :next_time=>time, :timezone=>'UTC')
+    s01 = @sc.add('sched01', 't01', :cron=>"0 * * * *", :delay=>30, :next_time=>time, :timezone=>'UTC')
 
     t01 = @sc.poll(:alive_time=>86400, :now=>time)
     t01.should == nil
@@ -109,31 +109,31 @@ describe ScheduleCollection do
 
   it 'invalid cron format' do
     lambda {
-      @sc.submit('sched01', 't01', :cron=>'???')
+      @sc.add('sched01', 't01', :cron=>'???')
     }.should raise_error ArgumentError
 
     lambda {
-      @sc.submit('sched01', 't01', :cron=>'* * * * * *')
+      @sc.add('sched01', 't01', :cron=>'* * * * * *')
     }.should raise_error ArgumentError
   end
 
-  it 'fail duplicated submit' do
-    @sc.submit('sched01', 't01', :cron=>"0 * * * *")
+  it 'fail duplicated add' do
+    @sc.add('sched01', 't01', :cron=>"0 * * * *")
     lambda {
-      @sc.submit('sched01', 't01', :cron=>"0 * * * *")
+      @sc.add('sched01', 't01', :cron=>"0 * * * *")
     }.should raise_error AlreadyExistsError
 
     @sc['sched01'].delete!
 
-    @sc.submit('sched01', 't01', :cron=>"0 * * * *")
+    @sc.add('sched01', 't01', :cron=>"0 * * * *")
   end
 
   it 'list' do
     time = 1323820800  # 2011-12-14 00:00:00 UTC
 
-    @sc.submit('sched01', 't01', :cron=>"0 * * * *", :next_time=>time, :delay=>1)
-    @sc.submit('sched02', 't02', :cron=>"0 * * * *", :next_time=>time, :delay=>2)
-    @sc.submit('sched03', 't03', :cron=>"0 * * * *", :next_time=>time, :delay=>3, :next_run_time=>time+3600)
+    @sc.add('sched01', 't01', :cron=>"0 * * * *", :next_time=>time, :delay=>1)
+    @sc.add('sched02', 't02', :cron=>"0 * * * *", :next_time=>time, :delay=>2)
+    @sc.add('sched03', 't03', :cron=>"0 * * * *", :next_time=>time, :delay=>3, :next_run_time=>time+3600)
 
     a = []
     @sc.list {|s|

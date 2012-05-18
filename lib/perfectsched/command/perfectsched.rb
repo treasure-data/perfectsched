@@ -17,6 +17,7 @@ op.version = PerfectSched::VERSION
 
 env = ENV['RAILS_ENV'] || 'development'
 config_path = 'config/perfectsched.yml'
+include_dirs = []
 require_files = []
 
 add_options = {
@@ -55,6 +56,10 @@ op.on('-a', '--at UNIXTIME', 'Set the first run time (default: start+delay)', In
 }
 
 op.separator("\noptions for run:")
+
+op.on('-I', '--include PATH', 'Add $LOAD_PATH directory') {|s|
+  include_dirs << s
+}
 
 op.on('-r', '--require PATH', 'Require files before starting') {|s|
   require_files << s
@@ -147,6 +152,9 @@ when :add
   }
 
 when :run
+  include_dirs.each {|path|
+    $LOAD_PATH << File.expand_path(path)
+  }
   require_files.each {|file|
     require file
   }

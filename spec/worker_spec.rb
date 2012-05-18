@@ -48,9 +48,9 @@ describe Worker do
     @thread.join
   end
 
-  def submit(*args)
+  def add(*args)
     sc = get_test_sched
-    sc.submit(*args)
+    sc.add(*args)
     sc.close
   end
 
@@ -58,7 +58,7 @@ describe Worker do
     TestApp.later do
       TestHandler.any_instance.should_receive(:run).once
     end
-    submit('key', 'test', {:cron=>'* * * * *', :next_time=>Time.now.to_i-60})
+    add('key', 'test', {:cron=>'* * * * *', :next_time=>Time.now.to_i-60})
     sleep 2
   end
 

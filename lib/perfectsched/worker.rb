@@ -59,7 +59,7 @@ module PerfectSched
       @log.info "stop"
       begin
         @finished = true
-        @engine.stop
+        @engine.stop if @engine
       rescue
         @log.error "failed to stop: #{$!}"
         $!.backtrace.each {|bt| @log.warn "\t#{bt}" }
