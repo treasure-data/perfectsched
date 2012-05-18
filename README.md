@@ -11,7 +11,7 @@ All you have to consider is implementing idempotent worker programs. It's recomm
 
 ## API overview
 
-```ruby
+```
 # open a schedule collection
 PerfectSched.open(config, &block)  #=> #<ScheduleCollection>
 
@@ -32,7 +32,7 @@ Task#finish!
 Task#retry!
 ```
 
-Example:
+### Example
 
 ```ruby
 # submit a task
@@ -65,6 +65,7 @@ class TestHandler < PerfectSched::Application::Base
     task.finish!
   end
 end
+```
 
 ### 2. Implement PerfectSched::Application::Dispatch
 
