@@ -33,6 +33,10 @@ module PerfectSched
     attr_reader :backend
     attr_reader :config
 
+    def init_database(options={})
+      @backend.init_database(options)
+    end
+
     def get_schedule_metadata(key, options={})
       @backend.get_schedule_metadata(key, options)
     end
@@ -43,7 +47,7 @@ module PerfectSched
     # :data
     # :delay => 0
     # :timezone => UTC
-    def submit(key, type, options={})
+    def add(key, type, options={})
       cron = options[:cron]
 
       raise ArgumentError, ":cron option is required" unless cron
@@ -62,7 +66,7 @@ module PerfectSched
         next_run_time = next_time + delay
       end
 
-      @backend.submit(key, type, cron, delay, timezone, data, next_time, next_run_time, options)
+      @backend.add(key, type, cron, delay, timezone, data, next_time, next_run_time, options)
 
       # TODO return value
       return next_time, next_run_time

@@ -10,6 +10,7 @@ commands:
     add <key> <type> <cron> <data>   Register a new schedule
     delete <key>                     Delete a registered schedule
     run <class>                      Run a worker process
+    init                             Initialize a backend database
 
 ]
 op.version = PerfectSched::VERSION
@@ -18,11 +19,11 @@ env = ENV['RAILS_ENV'] || 'development'
 config_path = 'config/perfectsched.yml'
 require_files = []
 
-add_config = {
+add_options = {
   :delay => 0,
   :timezone => 'UTC',
-  :start => nil,
-  :run => nil,
+  :next_time => nil,
+  :next_run_time => nil,
 }
 
 op.separator("options:")
@@ -38,19 +39,19 @@ op.on('-c', '--config PATH.yml', 'Path to a configuration file (default: config/
 op.separator("\noptions for add:")
 
 op.on('-d', '--delay SEC', 'Delay time before running a schedule (default: 0)', Integer) {|i|
-  add_config[:delay] = i
+  add_options[:delay] = i
 }
 
 op.on('-t', '--timezone NAME', 'Set timezone (default: UTC)') {|s|
-  add_config[:timezone] = s
+  add_options[:timezone] = s
 }
 
 op.on('-s', '--start UNIXTIME', 'Set the first schedule time (default: now)', Integer) {|i|
-  add_config[:start] = i
+  add_options[:next_time] = i
 }
 
 op.on('-a', '--at UNIXTIME', 'Set the first run time (default: start+delay)', Integer) {|i|
-  add_config[:run] = i
+  add_options[:next_run_time] = i
 }
 
 op.separator("\noptions for run:")
@@ -80,12 +81,12 @@ begin
 
   when 'delete'
     cmd = :delete
+    usage nil unless ARGV.length == 1
     key = ARGV[0]
-    usage nil unless ARGV.length == 0
 
   when 'add'
     cmd = :add
-    usage nil unless ARGV.length == 3
+    usage nil unless ARGV.length == 4
     key, type, cron, data = *ARGV
     require 'json'
     data = JSON.load(data)
@@ -94,6 +95,10 @@ begin
     cmd = :run
     usage nil unless ARGV.length == 1
     klass = ARGV[0]
+
+  when 'init'
+    cmd = :init
+    usage nil unless ARGV.length == 0
 
   else
     raise "unknown command: '#{cmd}'"
@@ -117,12 +122,17 @@ config_load_proc = Proc.new {
 
 case cmd
 when :list
+  n = 0
   PerfectSched.open(config_load_proc.call) {|scheds|
+    format = "%30s %10s %18s %7s %11s %28s %28s  %s"
+    puts format % ['key', 'type', 'cron', 'delay', 'timezone', 'next_time', 'next_run_time', 'data']
     scheds.list {|sched|
-      # TODO
-      p sched
+      next_time = sched.next_time ? Time.at(sched.next_time) : sched.next_time
+      next_run_time = sched.next_run_time ? Time.at(sched.next_run_time) : sched.next_run_time
+      puts format % [sched.key, sched.type, sched.cron, sched.delay, sched.timezone, next_time, next_run_time, sched.data]
     }
   }
+  puts "#{n} entries."
 
 when :delete
   PerfectSched.open(config_load_proc.call) {|scheds|
@@ -131,7 +141,9 @@ when :delete
 
 when :add
   PerfectSched.open(config_load_proc.call) {|scheds|
-    scheds.submit(key, type, {:cron=>cron, :timezone=>timezone, :data=>data})
+    add_options[:cron] = cron
+    add_options[:data] = data
+    scheds.add(key, type, add_options)
   }
 
 when :run
@@ -140,5 +152,10 @@ when :run
   }
   klass = Object.const_get(klass)
   PerfectSched::Worker.run(klass, &config_load_proc)
+
+when :init
+  PerfectSched.open(config_load_proc.call) {|scheds|
+    scheds.client.init_database
+  }
 end
 

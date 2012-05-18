@@ -49,8 +49,8 @@ module PerfectSched
     # :data => Hash
     # :cron
     # :timezone
-    def submit(key, type, options={})
-      @client.submit(key, type, options)
+    def add(key, type, options={})
+      @client.add(key, type, options)
     end
 
     def close

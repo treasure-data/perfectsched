@@ -52,6 +52,23 @@ module PerfectSched
 
       attr_reader :db
 
+      def init_database(options)
+        sql = %[
+          CREATE TABLE IF NOT EXISTS `test_scheds` (
+            id VARCHAR(256) NOT NULL,
+            timeout INT NOT NULL,
+            next_time INT NOT NULL,
+            cron VARCHAR(128) NOT NULL,
+            delay INT NOT NULL,
+            data BLOB NOT NULL,
+            timezone VARCHAR(256) NULL,
+            PRIMARY KEY (id)
+          );]
+        connect {
+          @db.run sql
+        }
+      end
+
       def get_schedule_metadata(key, options={})
         connect {
           row = @db.fetch("SELECT id, timeout, next_time, cron, delay, data, timezone FROM `#{@table}` LIMIT 1").first
@@ -73,7 +90,7 @@ module PerfectSched
         }
       end
 
-      def submit(key, type, cron, delay, timezone, data, next_time, next_run_time, options)
+      def add(key, type, cron, delay, timezone, data, next_time, next_run_time, options)
         data = data.dup
         data[:type] = type
         connect {
