@@ -52,6 +52,10 @@ module PerfectSched
     def submit(key, type, options={})
       @client.submit(key, type, options)
     end
+
+    def close
+      client.close
+    end
   end
 
 end

@@ -26,8 +26,8 @@ module PerfectSched
     :BackendHelper => 'perfectsched/backend',
     :BlockingFlag => 'perfectsched/blocking_flag',
     :Client => 'perfectsched/client',
-    :Daemon => 'perfectsched/daemon',
     :DaemonsLogger => 'perfectsched/daemons_logger',
+    :Engine => 'perfectsched/engine',
     :Model => 'perfectsched/model',
     :Runner => 'perfectsched/runner',
     :ScheduleCollection => 'perfectsched/schedule_collection',
@@ -35,7 +35,7 @@ module PerfectSched
     :ScheduleWithMetadata => 'perfectsched/schedule',
     :ScheduleMetadata => 'perfectsched/schedule_metadata',
     :ScheduleMetadataAccessors => 'perfectsched/schedule_metadata',
-    :SignalThread => 'perfectsched/signal_thread',
+    :SignalQueue => 'perfectsched/signal_queue',
     :Task => 'perfectsched/task',
     :Worker => 'perfectsched/worker',
   }.each_pair {|k,v|

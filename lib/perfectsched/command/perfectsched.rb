@@ -139,6 +139,6 @@ when :run
     require file
   }
   klass = Object.const_get(klass)
-  PerfectSched::Daemon.run(klass, &config_load_proc)
+  PerfectSched::Worker.run(klass, &config_load_proc)
 end
 

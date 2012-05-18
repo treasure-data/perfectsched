@@ -18,63 +18,7 @@
 
 module PerfectSched
 
-  require 'logger'
-
-  class DaemonsLogger < Logger
-    def initialize(dev, shift_age=0, shift_size=1048576)
-      @stdout_hook = false
-      @stderr_hook = false
-      if dev.is_a?(String)
-        @path = dev
-        @io = File.open(dev, File::WRONLY|File::APPEND)
-      else
-        @io = dev
-      end
-      super(@io, shift_size, shift_size)
-    end
-
-    def hook_stdout!
-      return nil if @io == STDOUT
-      STDOUT.reopen(@io)
-      @stdout_hook = true
-      self
-    end
-
-    def hook_stderr!
-      STDERR.reopen(@io)
-      @stderr_hook = true
-      self
-    end
-
-    def reopen!
-      if @path
-        @io.reopen(@path)
-        if @stdout_hook
-          STDOUT.reopen(@io)
-        end
-        if @stderr_hook
-          STDERR.reopen(@io)
-        end
-      end
-      nil
-    end
-
-    def reopen
-      begin
-        reopen!
-        return true
-      rescue
-        # TODO log?
-        return false
-      end
-    end
-
-    def close
-      if @path
-        @io.close unless @io.closed?
-      end
-      nil
-    end
-  end
+  require 'perfectqueue/daemons_logger'
+  DaemonsLogger = PerfectQueue::DaemonsLogger
 
 end

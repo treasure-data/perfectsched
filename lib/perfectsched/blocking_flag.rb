@@ -18,67 +18,8 @@
 
 module PerfectSched
 
-  class BlockingFlag
-    def initialize
-      require 'thread'
-      @set = false
-      @mutex = Mutex.new
-      @cond = ConditionVariable.new
-    end
-
-    def set!
-      toggled = false
-      @mutex.synchronize do
-        unless @set
-          @set = true
-          toggled = true
-        end
-        @cond.broadcast
-      end
-      return toggled
-    end
-
-    def reset!
-      toggled = false
-      @mutex.synchronize do
-        if @set
-          @set = false
-          toggled = true
-        end
-        @cond.broadcast
-      end
-      return toggled
-    end
-
-    def set?
-      @set
-    end
-
-    def set_region(&block)
-      set!
-      begin
-        block.call
-      ensure
-        reset!
-      end
-    end
-
-    def reset_region(&block)
-      reset!
-      begin
-        block.call
-      ensure
-        set!
-      end
-    end
-
-    def wait(timeout=nil)
-      @mutex.synchronize do
-        @cond.wait(@mutex, timeout)
-      end
-      self
-    end
-  end
+  require 'perfectqueue/blocking_flag'
+  BlockingFlag = PerfectQueue::BlockingFlag
 
 end
 

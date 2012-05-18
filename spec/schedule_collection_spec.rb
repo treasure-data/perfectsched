@@ -1,22 +1,7 @@
 
 describe ScheduleCollection do
   before do
-    FileUtils.rm_f 'spec/test.db'
-    @sc = PerfectSched.open(:type=>'rdb_compat', :url=>'sqlite://spec/test.db', :table=>'test_scheds')
-
-    sql = %[
-      CREATE TABLE IF NOT EXISTS `test_scheds` (
-        id VARCHAR(256) NOT NULL,
-        timeout INT NOT NULL,
-        next_time INT NOT NULL,
-        cron VARCHAR(128) NOT NULL,
-        delay INT NOT NULL,
-        data BLOB NOT NULL,
-        timezone VARCHAR(256) NULL,
-        PRIMARY KEY (id)
-      );]
-
-    @sc.client.backend.db.run sql
+    @sc = create_test_sched
   end
 
   after do

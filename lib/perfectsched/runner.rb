@@ -24,6 +24,10 @@ module PerfectSched
 
     attr_reader :task
 
+    def schedules
+      ScheduleCollection.new(task.client)
+    end
+
     #def run
     #end
   end

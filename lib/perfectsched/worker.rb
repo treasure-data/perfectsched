@@ -19,53 +19,153 @@
 module PerfectSched
 
   class Worker
-    def initialize(config, runner)
-      @config = config
+    def self.run(runner, config=nil, &block)
+      new(runner, config, &block).run
+    end
+
+    def initialize(runner, config=nil, &block)
+      # initial logger
+      STDERR.sync = true
+      @log = DaemonsLogger.new(STDERR)
+
       @runner = runner
-
-      @poll_interval = @config[:poll_interval] || 1.0
-      @log = @config[:logger] || Logger.new(STDERR)
-
-      @running_flag = BlockingFlag.new
-      @finish_flag = BlockingFlag.new
-
-      @scheds = PerfectSched.open(@config)
+      block = Proc.new { config } if config
+      @config_load_proc = block
+      @finished = false
     end
 
     def run
-      @running_flag.set_region do
-        until @finish_flag.set?
-          task = scheds.poll
-          if task
-            @runner.run(task)
-          else
-            @finish_flag.wait(@config[:poll_interval)
+      @sig = install_signal_handlers
+      begin
+        @engine = Engine.new(@runner, load_config)
+        begin
+          until @finished
+            @engine.run
           end
+        ensure
+          @engine.shutdown
         end
+      ensure
+        @sig.shutdown
+      end
+      return nil
+    rescue
+      @log.error "#{$!.class}: #{$!}"
+      $!.backtrace.each {|x| @log.error "  #{x}" }
+      return nil
+    end
+
+    def stop
+      @log.info "stop"
+      begin
+        @finished = true
+        @engine.stop
+      rescue
+        @log.error "failed to stop: #{$!}"
+        $!.backtrace.each {|bt| @log.warn "\t#{bt}" }
+        return false
+      end
+      return true
+    end
+
+    def restart
+      @log.info "Received restart"
+      begin
+        engine = Engine.new(@runner, load_config)
+        current = @engine
+        @engine = engine
+        current.shutdown
+      rescue
+        @log.error "failed to restart: #{$!}"
+        $!.backtrace.each {|bt| @log.warn "\t#{bt}" }
+        return false
+      end
+      return true
+    end
+
+    def replace(command=[$0]+ARGV)
+      @log.info "replace"
+      begin
+        return if @replaced_pid
+        stop
+        @replaced_pid = Process.fork do
+          exec(*command)
+          exit!(127)
+        end
+      rescue
+        @log.error "failed to replace: #{$!}"
+        $!.backtrace.each {|bt| @log.warn "\t#{bt}" }
+        return false
       end
       self
     end
 
-    def stop
-      @finish_flag.set!
-      self
+    def logrotated
+      @log.info "reopen a log file"
+      begin
+        @log.reopen!
+      rescue
+        @log.error "failed to restart: #{$!}"
+        $!.backtrace.each {|bt| @log.warn "\t#{bt}" }
+        return false
+      end
+      return true
     end
 
-    def join
-      @running_flag.wait while @running_flag.set?
-      self
+    private
+    def load_config
+      raw_config = @config_load_proc.call
+      config = {}
+      raw_config.each_pair {|k,v| config[k.to_sym] = v }
+
+      log = DaemonsLogger.new(config[:log] || STDERR)
+      if old_log = @log
+        old_log.close
+      end
+      @log = log
+
+      config[:logger] = log
+
+      return config
     end
 
-    def close
-      @scheds.close
-      self
-    end
+    def install_signal_handlers(&block)
+      SignalQueue.start do |sig|
+        sig.trap :TERM do
+          stop
+        end
+        sig.trap :INT do
+          stop
+        end
 
-    def shutdown
-      stop
-      join
-      close
+        sig.trap :QUIT do
+          stop
+        end
+
+        sig.trap :USR1 do
+          restart
+        end
+
+        #sig.trap :USR2 do
+        #  restart
+        #end
+
+        sig.trap :HUP do
+          logrotated
+        end
+
+        sig.trap :WINCH do
+          restart
+        end
+
+        sig.trap :CONT do
+          logrotated
+        end
+
+        trap :CHLD, "SIG_IGN"
+      end
     end
   end
 
 end
+

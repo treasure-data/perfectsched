@@ -17,16 +17,9 @@
 #
 
 module PerfectSched
-  module Application
 
-    class Base
-      attr_accessor :task
+  require 'perfectqueue/signal_queue'
+  SignalQueue = PerfectQueue::SignalQueue
 
-      def schedules
-        ScheduleCollection.new(task.client)
-      end
-    end
-
-  end
 end
 
