@@ -88,7 +88,7 @@ system('perfectsched run -I. -rapp/schedules/dispatch Dispatch')
 or:
 
 ```ruby
-request 'perfectsched'
+require 'perfectsched'
 require 'app/schedules/dispatch'
 
 PerfectSched::Worker.run(Dispatch) {
@@ -101,8 +101,8 @@ PerfectSched::Worker.run(Dispatch) {
 
 ### Signal handlers
 
-- **TERM,INT,QUIT:** shutdown
-- **USR1,HUP:** restart
+- **TERM**,**INT**,**QUIT:** shutdown
+- **USR1**,**HUP:** restart
 - **USR2:** reopen log files
 
 ## Configuration
