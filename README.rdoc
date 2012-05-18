@@ -1,137 +1,102 @@
 = PerfectSched
 
-Highly available distributed cron works with PerfectQueue.
+PerfectSched is a highly available distributed cron built on top of RDBMS.
 
-It provides exactly-once semantics unless backend database fails. Registered schedules are surely pushed to a queue provided by PerfectQueue every time in order.
+It provides at-least-once semantics; Even if a worker node fails during process a task, the task is retried by another worker.
 
-You can register, modify and delete schedules using the command line utility or library API.
+PerfectSched also guarantees that only one worker server processes a task if the server is alive.
 
-Backend database is pluggable. PerfectSched supports RDBMS and Amazon SimpleDB for now.
-
-
-== Architecture
-
-PerfectSched uses following database schema:
-
-  (
-    id:string        -- unique identifier of the schedule
-    data:blob        -- additional attributes to be pushed to PerfectQueue
-    next_time:int    -- unix time of the next schedule
-    cron:string      -- description of the schedule
-    delay:int        -- delay time before running a schedule
-    timeout:int
-  )
-
-1. list: lists tasks whose timeout column is old enough.
-2. lock: updates timeout column of the first task
-3. push: push a message to the PerfectQueue
-4. update: if it succeeded, updates the next_time and timeout columns
-5. or leave: if it failed, leave the row and expect to be retried.
+All you have to consider is implementing idempotent worker programs. It's recommended to use [PerfectQueue](https://github.com/treasure-data/perfectqueue) with PerfectSched.
 
 
-=== Cooperation with PerfectQueue
+== API overview
 
-PerfectSched pushes a task to PerfectQueue every time on schedule. The ID of the task becomes "<id of the scuedule>.<unix time of the schedule>". For example, the identifier of the schedule is "my-sched", and a schedule runs at "2011-08-30 00:00:00 UTC" (1314662400 in UNIX TIME), the ID of the task is "my-sched.1314662400". The data of the task is same as the schedule.
+    # open a schedule collection
+    PerfectSched.open(config, &block)  #=> #<ScheduleCollection>
+    
+    # add a schedule
+    ScheduleCollection#add(task_id, type, options)
+    
+    # poll a scheduled task
+    # (you don't have to use this method directly. see following sections)
+    ScheduleCollection#poll  #=> #<Task>
+    
+    # get data associated with a task
+    Task#data  #=> #<Hash>
+    
+    # finish a task
+    Task#finish!
+    
+    # retry a task
+    Task#retry!
 
+example:
 
-== Library usage
-
-=== Adding a schedule
-
-  require 'perfectsched'
-  
-  # RDBMS
-  require 'perfectsched/backend/rdb'
-  sched = PerfectSched::Backend::RDBBackend.new(
-         'mysql://user:password@localhost/mydb', table='perfectsched')
-
-  # SimpleDB
-  require 'perfectsched/backend/simpledb'
-  sched = PerfectSched::Backend::SimpleDBBackend.new(
-         'AWS_KEY_ID', 'AWS_SECRET_KEY', 'your-simpledb-domain-name')
-  
-  id = 'unique-key-id'
-  cron = "* * * * *"
-  delay = 0
-  data = '{"any":"data"}'
-  start = Time.now.to_i
-  sched.add(id, cron, delay, data, start)
-
-=== Deleting a schedule
-
-  sched.delete(id)
-
-=== Modifying a schedule
-
-  cron = "* * * * 0"
-  delay = 10
-  sched.modify_sched(id, cron, delay)
-
-  data = '{"user":1}'
-  sched.modify_data(id, data)
-
-  sched.modify(id, cron, delay, data)
+    # submit tasks
+    PerfectSched.open(config) {|sc|
+      data = {'key'=>"value"}
+      options = {
+        :cron => '0 * * * *',
+        :delay => 30,
+        :timezone => 'Asia/Tokyo',
+        :next_time => Time.parse('2013-01-01 00:00:00 +0900').to_i,
+        :data => data,
+      }
+      sc.submit("sched-id", "type1", options)
+    }
 
 
+== Writing a worker application
 
-== Command line usage
+    # extend PerfectSched::Application::Base
+    class TestHandler < PerfectSched::Application::Base
+      # implement run method
+      def run
+        # do something ...
+        puts "acquired task: #{task.inspect}"
+    
+        # call task.finish!, task.retry! or task.release!
+        task.finish!
+      end
+    end
+    
+    # extend PerfectSched::Application::Dispatch
+    class Dispatch < PerfectSched::Application::Dispatch
+      # describe routing
+      route "type1" => TestHandler
+      route /^regexp-.*$/ => :TestHandler  # String or Regexp => Class or Symbol
+    end
+    
+    # run PerfectSched::Worker with the dispatcher (rake task)
+    PerfectSched::Worker.run(Dispatch) {
+      # this method is called when the worker process is restarted
+      raw = File.read('config/perfectsched.yml')
+      yml = YAJL.load(raw)
+      yml[ENV['RAILS_ENV'] || 'development']
+    }
 
-  Usage: perfectsched [options]
-          --setup PATH.yaml            Write example configuration file
-      -f, --file PATH.yaml             Set path to the configuration file
-  
-          --list                       Show registered schedule
-          --delete ID                  Delete a registered schedule
-  
-          --add <ID> <CRON> <DATA>     Register a schedule
-      -d, --delay SEC                  Delay time before running a schedule (default: 0)
-      -s, --start UNIXTIME             Start time to run a schedule (default: now)
-  
-      -S, --modify-sched <ID> <CRON>   Modify schedule of a registered schedule
-      -D, --modify-delay <ID> <DELAY>  Modify delay of a registered schedule
-      -J, --modify-data <ID> <DATA>    Modify data of a registered schedule
-  
-      -b, --daemon PIDFILE             Daemonize (default: foreground)
-      -o, --log PATH                   log file path
-      -v, --verbose                    verbose mode
+=== Signal handlers
 
+- TERM,INT,QUIT: shutdown
+- USR1,HUP: restart
+- USR2: reopen log files
 
-=== Configuration
+== Configuration
 
-First of all, create a configuration file:
+- type: backend type (required; see following sections)
+- log: log file path (default: use stderr)
+- poll_interval: interval to poll tasks in seconds (default: 1.0 sec)
+- timezone: default timezone (default: 'UTC')
+- alive_time: duration to continue a heartbeat request (default: 300 sec)
+- retry_wait: duration to retry a retried task (default: 300 sec)
 
-  $ perfectsched --setup config.yaml
-  $ edit config.yaml
+== Backend types
 
+=== rdb_compat
 
-=== Adding a schedule
+parameters:
 
-  $ perfectsched -f config.yaml --add unique-key-id "* * * * *" '{"any":"data"}'
+- url: URL to the RDBMS (example: 'mysql://user:password@host:port/database')
+- table: name of the table to use
 
-
-=== Deleting a schedule
-
-  $ perfectsched -f config.yaml --delete unique-key-id
-
-
-=== Modifying a schedule
-
-  $ perfectsched -f config.yaml --modify-sched unique-key-id "* * * * 0"
-  $ perfectsched -f config.yaml --modify-delay unique-key-id 10
-  $ perfectsched -f config.yaml --modify-data unique-key-id '{"user":1}'
-
-
-=== Listing registered schedules
-
-  $ perfectsched -f config.yaml --list
-                          id             schedule    delay                  next time                   next run  data
-                       test1            * * * * *        0  2011-08-30 01:29:42 +0900  2011-08-30 01:29:42 +0900  {"attr1":"val1","attr":"val2"}
-  1 entries.
-
-
-=== Running a scheduler
-
-  $ perfectsched -f config.yaml
-
-It's recommended to run the scheduler on several servers for availability.
 
