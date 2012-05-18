@@ -146,19 +146,11 @@ module PerfectSched
           restart
         end
 
-        #sig.trap :USR2 do
-        #  restart
-        #end
-
         sig.trap :HUP do
-          logrotated
-        end
-
-        sig.trap :WINCH do
           restart
         end
 
-        sig.trap :CONT do
+        sig.trap :USR2 do
           logrotated
         end
 

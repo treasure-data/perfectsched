@@ -26,7 +26,7 @@ module PerfectSched
 
       @timezone = @config[:timezone] || 'UTC'
       @max_acquire = @config[:max_acquire] || 1
-      @alive_time = @config[:alive_time] || 3600
+      @alive_time = @config[:alive_time] || 300
       @retry_wait = @config[:retry_wait] || 300  # TODO retry wait algorithm
     end
 
