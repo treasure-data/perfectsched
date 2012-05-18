@@ -78,17 +78,19 @@ end
 ```
 
 ### 3. Run the worker
+
 In a launcher script or rake file:
 
-```
-# run PerfectSched::Worker with the dispatcher
+```ruby
 system('perfectsched run -I. -rapp/schedules/dispatch Dispatch')
 ```
 
 or:
 
 ```ruby
+request 'perfectsched'
 require 'app/schedules/dispatch'
+
 PerfectSched::Worker.run(Dispatch) {
   # this method is called when the worker process is restarted
   raw = File.read('config/perfectsched.yml')
