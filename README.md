@@ -1,4 +1,4 @@
-= PerfectSched
+# PerfectSched
 
 PerfectSched is a highly available distributed cron built on top of RDBMS.
 
@@ -6,11 +6,12 @@ It provides at-least-once semantics; Even if a worker node fails during process 
 
 PerfectSched also guarantees that only one worker server processes a task if the server is alive.
 
-All you have to consider is implementing idempotent worker programs. It's recommended to use [PerfectQueue](https://github.com/treasure-data/perfectqueue) with PerfectSched.
+All you have to consider is implementing idempotent worker programs. It's recommended to use [PerfectQueue](https://github.com/treasure-data/perfectqueue9 with PerfectSched.
 
 
-== API overview
+## API overview
 
+```ruby
     # open a schedule collection
     PerfectSched.open(config, &block)  #=> #<ScheduleCollection>
     
@@ -29,9 +30,11 @@ All you have to consider is implementing idempotent worker programs. It's recomm
     
     # retry a task
     Task#retry!
+```
 
 example:
 
+```ruby
     # submit tasks
     PerfectSched.open(config) {|sc|
       data = {'key'=>"value"}
@@ -44,10 +47,12 @@ example:
       }
       sc.submit("sched-id", "type1", options)
     }
+```
 
 
-== Writing a worker application
+## Writing a worker application
 
+```ruby
     # extend PerfectSched::Application::Base
     class TestHandler < PerfectSched::Application::Base
       # implement run method
@@ -66,37 +71,49 @@ example:
       route "type1" => TestHandler
       route /^regexp-.*$/ => :TestHandler  # String or Regexp => Class or Symbol
     end
-    
-    # run PerfectSched::Worker with the dispatcher (rake task)
+```
+
+Running worker process (in rake file):
+
+```
+    # run PerfectSched::Worker with the dispatcher
+    system('perfectsched run -I. -rapp/schedules/dispatch Dispatch')
+```
+
+OR:
+
+```ruby
+    require 'app/schedules/dispatch'
     PerfectSched::Worker.run(Dispatch) {
       # this method is called when the worker process is restarted
       raw = File.read('config/perfectsched.yml')
       yml = YAJL.load(raw)
       yml[ENV['RAILS_ENV'] || 'development']
     }
+```
 
-=== Signal handlers
+### Signal handlers
 
-- TERM,INT,QUIT: shutdown
-- USR1,HUP: restart
-- USR2: reopen log files
+- *TERM,INT,QUIT:* shutdown
+- *USR1,HUP:* restart
+- *USR2:* reopen log files
 
-== Configuration
+## Configuration
 
-- type: backend type (required; see following sections)
-- log: log file path (default: use stderr)
-- poll_interval: interval to poll tasks in seconds (default: 1.0 sec)
-- timezone: default timezone (default: 'UTC')
-- alive_time: duration to continue a heartbeat request (default: 300 sec)
-- retry_wait: duration to retry a retried task (default: 300 sec)
+- *type:* backend type (required; see following sections)
+- *log:* log file path (default: use stderr)
+- *poll\_interval:* interval to poll tasks in seconds (default: 1.0 sec)
+- *timezone:* default timezone (default: 'UTC')
+- *alive\_time:* duration to continue a heartbeat request (default: 300 sec)
+- *retry\_wait:* duration to retry a retried task (default: 300 sec)
 
-== Backend types
+## Backend types
 
-=== rdb_compat
+### rdb\_compat
 
-parameters:
+additional configuration:
 
-- url: URL to the RDBMS (example: 'mysql://user:password@host:port/database')
-- table: name of the table to use
+- *url:* URL to the RDBMS (example: 'mysql://user:password@host:port/database')
+- *table:* name of the table to use
 
 
