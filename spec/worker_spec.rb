@@ -9,34 +9,21 @@ class TestHandler < PerfectSched::Application::Base
     if num = task.data['sleep']
       sleep num
     end
-    puts "task finished"
+    puts "Task finished"
   end
 
   def kill(reason)
-    puts "#{reason.class}: #{reason}"
+    puts "kill: #{reason.class}: #{reason}"
   end
 end
 
 class TestApp < PerfectSched::Application::Dispatch
-  LATER = []
-
-  def self.later(&block)
-    LATER << block
-  end
-
-  def self.new(task)
-    # TODO rspec doesn't work with fork?
-    #LATER.each {|block| block.call }
-    super
-  end
-
   route 'test' => TestHandler
 end
 
 describe Worker do
   before do
     create_test_sched.close
-    TestApp::LATER.clear
     @worker = Worker.new(TestApp, test_sched_config)
     @thread = Thread.new {
       @worker.run
@@ -55,9 +42,7 @@ describe Worker do
   end
 
   it 'run' do
-    TestApp.later do
-      TestHandler.any_instance.should_receive(:run).once
-    end
+    TestHandler.any_instance.should_receive(:run).once
     add('key', 'test', {:cron=>'* * * * *', :next_time=>Time.now.to_i-60})
     sleep 2
   end
