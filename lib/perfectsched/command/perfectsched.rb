@@ -129,12 +129,13 @@ case cmd
 when :list
   n = 0
   PerfectSched.open(config_load_proc.call) {|scheds|
-    format = "%30s %10s %18s %7s %11s %28s %28s  %s"
+    format = "%30s %15s %18s %7s %11s %28s %28s  %s"
     puts format % ['key', 'type', 'cron', 'delay', 'timezone', 'next_time', 'next_run_time', 'data']
     scheds.list {|sched|
       next_time = sched.next_time ? Time.at(sched.next_time) : sched.next_time
       next_run_time = sched.next_run_time ? Time.at(sched.next_run_time) : sched.next_run_time
       puts format % [sched.key, sched.type, sched.cron, sched.delay, sched.timezone, next_time, next_run_time, sched.data]
+      n += 1
     }
   }
   puts "#{n} entries."

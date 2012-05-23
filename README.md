@@ -30,7 +30,45 @@ Task#finish!
 
 # retry a task
 Task#retry!
+
+# create a schedule reference
+ScheduleCollection#[](key)  #=> #<Schedule>
+
+# chack the existance of the schedule
+Schedule#exists?
+
+# delete a schedule
+Schedule#delete!
 ```
+
+### Error classes
+
+```
+ScheduleError < StandardError
+
+##
+# Workers may get these errors:
+#
+
+AlreadyFinishedError < ScheduleError
+
+NotFoundError < ScheduleError
+
+PreemptedError < ScheduleError
+
+ProcessStopError < RuntimeError
+
+##
+# Client or other situation:
+#
+
+ConfigError < RuntimeError
+
+AlreadyExistsError < ScheduleError
+
+NotSupportedError < ScheduleError
+```
+
 
 ### Example
 
@@ -122,4 +160,60 @@ additional configuration:
 
 - **url:** URL to the RDBMS (example: 'mysql://user:password@host:port/database')
 - **table:** name of the table to use
+
+### rdb
+
+Not implemented yet.
+
+
+## Command line management tool
+
+```
+Usage: perfectsched [options] <command>
+
+commands:
+    list                             Show list of registered schedules
+    add <key> <type> <cron> <data>   Register a new schedule
+    delete <key>                     Delete a registered schedule
+    run <class>                      Run a worker process
+    init                             Initialize a backend database
+
+options:
+    -e, --environment ENV            Framework environment (default: development)
+    -c, --config PATH.yml            Path to a configuration file (default: config/perfectsched.yml)
+
+options for add:
+    -d, --delay SEC                  Delay time before running a schedule (default: 0)
+    -t, --timezone NAME              Set timezone (default: UTC)
+    -s, --start UNIXTIME             Set the first schedule time (default: now)
+    -a, --at UNIXTIME                Set the first run time (default: start+delay)
+
+options for run:
+    -I, --include PATH               Add $LOAD_PATH directory
+    -r, --require PATH               Require files before starting
+```
+
+### initializing a database
+
+    # assume that the config/perfectsched.yml exists
+    $ perfectsched init
+
+### submitting a task
+
+    $ perfectsched add s1 user_task '* * * * *' '{}'
+
+### listing tasks
+
+    $ perfectsched list
+                               key            type               cron   delay    timezone                    next_time                next_run_time  data
+                                s1       user_task          * * * * *       0         UTC      2012-05-18 22:04:00 UTC      2012-05-18 22:04:00 UTC  {}
+    1 entries.
+
+### delete a schedule
+
+    $ perfectsched delete s1
+
+### running a worker
+
+    $ perfectsched run -I. -Ilib -rconfig/boot.rb -rapps/schedules/schedule_dispatch.rb ScheduleDispatch
 
