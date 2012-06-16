@@ -71,7 +71,7 @@ module PerfectSched
 
       def get_schedule_metadata(key, options={})
         connect {
-          row = @db.fetch("SELECT id, timeout, next_time, cron, delay, data, timezone FROM `#{@table}` LIMIT 1").first
+          row = @db.fetch("SELECT id, timeout, next_time, cron, delay, data, timezone FROM `#{@table}` WHERE id=? LIMIT 1", key).first
           unless row
             raise NotFoundError, "schedule key=#{key} does not exist"
           end
@@ -91,8 +91,8 @@ module PerfectSched
       end
 
       def add(key, type, cron, delay, timezone, data, next_time, next_run_time, options)
-        data = data.dup
-        data[:type] = type
+        data = data ? data.dup : {}
+        data['type'] = type
         connect {
           begin
             n = @db["INSERT INTO `#{@table}` (id, timeout, next_time, cron, delay, data, timezone) VALUES (?, ?, ?, ?, ?, ?, ?);", key, next_run_time, next_time, cron, delay, data.to_json, timezone].insert
@@ -150,7 +150,7 @@ module PerfectSched
 
               n = @db["UPDATE `#{@table}` SET timeout=? WHERE id=? AND timeout=?;", next_timeout, row[:id], row[:timeout]].update
               if n > 0
-                scheduled_time = Time.at(row[:next_time]).utc
+                scheduled_time = row[:next_time]
                 attributes = create_attributes(row)
                 task_token = Token.new(row[:id], row[:next_time], attributes[:cron], attributes[:delay], attributes[:timezone])
                 task = Task.new(@client, row[:id], attributes, scheduled_time, task_token)
@@ -224,16 +224,24 @@ module PerfectSched
         timezone = row[:timezone] || 'UTC'
         delay = row[:delay] || 0
         cron = row[:cron]
-        next_time = Time.at(row[:next_time]).utc
-        next_run_time = Time.at(row[:timeout]).utc
+        next_time = row[:next_time]
+        next_run_time = row[:timeout]
 
-        begin
-          data = JSON.parse(row[:data] || '{}')
-        rescue
+        d = row[:data]
+        if d == nil || d == ''
           data = {}
+        else
+          begin
+            data = JSON.parse(d)
+          rescue
+            data = {}
+          end
         end
 
-        type = data.delete('type') || ''
+        type = data.delete('type')
+        if type == nil || type.empty?
+          type = row[:id].split(/\./, 2)[0]
+        end
 
         attributes = {
           :timezone => timezone,
