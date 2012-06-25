@@ -98,7 +98,7 @@ module PerfectSched
             n = @db["INSERT INTO `#{@table}` (id, timeout, next_time, cron, delay, data, timezone) VALUES (?, ?, ?, ?, ?, ?, ?);", key, next_run_time, next_time, cron, delay, data.to_json, timezone].insert
             return Schedule.new(@client, key)
           rescue Sequel::DatabaseError
-            raise AlreadyExistsError, "schedule key=#{key} already exists"
+            raise IdempotentAlreadyExistsError, "schedule key=#{key} already exists"
           end
         }
       end
@@ -107,7 +107,7 @@ module PerfectSched
         connect {
           n = @db["DELETE FROM `#{@table}` WHERE id=?;", key].delete
           if n <= 0
-            raise NotFoundError, "schedule key=#{key} does no exist"
+            raise IdempotentNotFoundError, "schedule key=#{key} does no exist"
           end
         }
       end
@@ -189,7 +189,7 @@ module PerfectSched
         connect {
           n = @db["UPDATE `#{@table}` SET timeout=?, next_time=? WHERE id=? AND next_time=?;", next_run_time, next_time, row_id, scheduled_time].update
           if n < 0
-            raise AlreadyFinishedError, "task time=#{Time.at(scheduled_time).utc} is already finished"
+            raise IdempotentAlreadyFinishedError, "task time=#{Time.at(scheduled_time).utc} is already finished"
           end
         }
       end
