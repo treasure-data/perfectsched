@@ -38,6 +38,7 @@ module PerfectSched
     :SignalQueue => 'perfectsched/signal_queue',
     :Task => 'perfectsched/task',
     :Worker => 'perfectsched/worker',
+    :VERSION => 'perfectsched/version',
   }.each_pair {|k,v|
     autoload k, File.expand_path(v, File.dirname(__FILE__))
   }
