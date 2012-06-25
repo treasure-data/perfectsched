@@ -1,4 +1,18 @@
 
+== 2012-06-25 version 0.8.1
+
+* Added autoload for PerfectSched::VERSION
+* Fixed rdb_compat backend to use Integer type for time fields
+* Added IdempotentAlreadyFinishedError and IdempotentAlreadyExistsError
+  which should be ignored for idempotency
+
+
+== 2012-05-23 version 0.8.0
+
+* New major version
+* Redesigned API
+
+
 == 2012-02-21 version 0.7.10
 
 * Fixed NullBackend#modify_checked
