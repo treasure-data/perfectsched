@@ -153,8 +153,6 @@ module PerfectSched
         sig.trap :USR2 do
           logrotated
         end
-
-        trap :CHLD, "SIG_IGN"
       end
     end
   end
