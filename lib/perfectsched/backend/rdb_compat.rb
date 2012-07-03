@@ -174,7 +174,7 @@ module PerfectSched
 
         connect {
           n = @db["UPDATE `#{@table}` SET timeout=? WHERE id=? AND next_time=?;", next_run_time, row_id, scheduled_time].update
-          if n < 0
+          if n < 0  # TODO fix
             raise AlreadyFinishedError, "task time=#{Time.at(scheduled_time).utc} is already finished"
           end
         }

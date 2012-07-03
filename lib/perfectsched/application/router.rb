@@ -17,17 +17,14 @@
 #
 
 module PerfectSched
-
   module Application
-    {
-      :Dispatch => 'application/dispatch',
-      :Router => 'application/router',
-      :RouterDSL => 'application/router',
-      :Base => 'application/base',
-    }.each_pair {|k,v|
-      autoload k, File.expand_path(v, File.dirname(__FILE__))
-    }
-  end
 
+    require 'perfectqueue/application/router'
+
+    Router = PerfectQueue::Application::Router
+
+    RouterDSL = PerfectQueue::Application::RouterDSL
+
+  end
 end
 

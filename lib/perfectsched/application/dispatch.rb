@@ -17,17 +17,30 @@
 #
 
 module PerfectSched
-
   module Application
-    {
-      :Dispatch => 'application/dispatch',
-      :Router => 'application/router',
-      :RouterDSL => 'application/router',
-      :Base => 'application/base',
-    }.each_pair {|k,v|
-      autoload k, File.expand_path(v, File.dirname(__FILE__))
-    }
-  end
 
+    class Dispatch < Runner
+      # Runner interface
+      def initialize(task)
+        base = self.class.router.route(task.type)
+        unless base
+          task.retry!
+          raise "Unknown task type #{task.type.inspect}"   # TODO error class
+        end
+        @runner = base.new(task)
+        super
+      end
+
+      attr_reader :runner
+
+      def run
+        @runner.run
+      end
+
+      # DSL interface
+      extend RouterDSL
+    end
+
+  end
 end
 
