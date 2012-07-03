@@ -49,6 +49,10 @@ module PerfectSched
       @attributes[:next_run_time]
     end
 
+    alias scheduled_time next_time
+
+    alias scheduled_run_time next_run_time
+
     def message
       @attributes[:message]
     end
