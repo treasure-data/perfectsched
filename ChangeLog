@@ -1,4 +1,13 @@
 
+== 2012-07-03 version 0.8.2
+
+* Fixed rdb_compat to raise PreemptedError and
+IdempotentAlreadyFinishedError correctly
+* Fixed Application module
+* Added scheduled_time -> next_time and scheduled_run_time -> next_run_time
+aliases to ScheduleMetadataAccessors
+
+
 == 2012-06-25 version 0.8.1
 
 * Added autoload for PerfectSched::VERSION
