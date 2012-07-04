@@ -54,7 +54,7 @@ module PerfectSched
 
       def init_database(options)
         sql = %[
-          CREATE TABLE IF NOT EXISTS `test_scheds` (
+          CREATE TABLE IF NOT EXISTS `#{@table}` (
             id VARCHAR(256) NOT NULL,
             timeout INT NOT NULL,
             next_time INT NOT NULL,
@@ -174,8 +174,15 @@ module PerfectSched
 
         connect {
           n = @db["UPDATE `#{@table}` SET timeout=? WHERE id=? AND next_time=?;", next_run_time, row_id, scheduled_time].update
-          if n < 0  # TODO fix
-            raise AlreadyFinishedError, "task time=#{Time.at(scheduled_time).utc} is already finished"
+          if n <= 0  # TODO fix
+            row = @db.fetch("SELECT id, timeout, next_time FROM `#{@table}` WHERE id=? AND next_time=? LIMIT 1", row_id, scheduled_time).first
+            if row == nil
+              raise PreemptedError, "task key=#{key} does not exist or preempted."
+            elsif row[:timeout] == next_run_time
+              # ok
+            else
+              raise PreemptedError, "task time=#{Time.at(scheduled_time).utc} is preempted"
+            end
           end
         }
       end
@@ -188,7 +195,7 @@ module PerfectSched
 
         connect {
           n = @db["UPDATE `#{@table}` SET timeout=?, next_time=? WHERE id=? AND next_time=?;", next_run_time, next_time, row_id, scheduled_time].update
-          if n < 0
+          if n <= 0
             raise IdempotentAlreadyFinishedError, "task time=#{Time.at(scheduled_time).utc} is already finished"
           end
         }
