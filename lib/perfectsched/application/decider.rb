@@ -17,20 +17,39 @@
 #
 
 module PerfectSched
-
   module Application
-    {
-      :Dispatch => 'application/dispatch',
-      :Router => 'application/router',
-      :RouterDSL => 'application/router',
-      :Decider => 'application/decider',
-      :DefaultDecider => 'application/decider',
-      :UndefinedDecisionError => 'application/decider',
-      :Base => 'application/base',
-    }.each_pair {|k,v|
-      autoload k, File.expand_path(v, File.dirname(__FILE__))
-    }
-  end
 
+    require 'perfectqueue/application/decider'
+
+    UndefinedDecisionError = PerfectQueue::Application::UndefinedDecisionError
+
+    class Decider
+      def initialize(base)
+        @base = base
+      end
+
+      def schedules
+        @base.schedules
+      end
+
+      def task
+        @base.task
+      end
+
+      def decide!(type, opts={})
+        begin
+          m = method(type)
+        rescue NameError
+          raise UndefinedDecisionError, "Undefined decision #{type} options=#{opt.inspect}"
+        end
+        m.call(type, opts)
+      end
+    end
+
+    class DefaultDecider < Decider
+      # no decisions defined
+    end
+
+  end
 end
 
