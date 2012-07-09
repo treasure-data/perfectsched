@@ -35,6 +35,8 @@ module PerfectSched
     end
 
     def run
+      @log.info "PerfectSched #{VERSION}"
+
       @sig = install_signal_handlers
       begin
         @engine = Engine.new(@runner, load_config)
