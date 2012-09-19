@@ -14,7 +14,6 @@ begin
     gemspec.require_paths = ["lib"]
     gemspec.add_dependency "cron-spec", [">= 0.1.2", "<= 0.1.2"]
     gemspec.add_dependency "sequel", "~> 3.26.0"
-    gemspec.add_dependency "aws-sdk", "~> 1.1.1"
     gemspec.add_dependency "perfectqueue", "~> 0.7.0"
     gemspec.add_dependency "tzinfo", "~> 0.3.29"
     gemspec.test_files = Dir["test/**/*.rb", "test/**/*.sh"]
