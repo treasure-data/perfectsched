@@ -37,19 +37,17 @@ module PerfectSched
     def run
       @log.info "PerfectSched #{VERSION}"
 
-      @sig = install_signal_handlers
+      install_signal_handlers
+
+      @engine = Engine.new(@runner, load_config)
       begin
-        @engine = Engine.new(@runner, load_config)
-        begin
-          until @finished
-            @engine.run
-          end
-        ensure
-          @engine.shutdown
+        until @finished
+          @engine.run
         end
       ensure
-        @sig.shutdown
+        @engine.shutdown
       end
+
       return nil
     rescue
       @log.error "#{$!.class}: #{$!}"
