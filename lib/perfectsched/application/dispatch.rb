@@ -22,10 +22,10 @@ module PerfectSched
     class Dispatch < Runner
       # Runner interface
       def initialize(task)
-        base = self.class.router.route(task.type)
+        base = self.class.router.route(task.key)
         unless base
-          task.retry!
-          raise "Unknown task type #{task.type.inspect}"   # TODO error class
+          task.retry!  # TODO or release?
+          raise "Unknown task key #{task.key.inspect}"   # TODO error class
         end
         @runner = base.new(task)
         super

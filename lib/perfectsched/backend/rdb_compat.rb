@@ -21,7 +21,7 @@ module PerfectSched
     class RDBCompatBackend
       include BackendHelper
 
-      class Token < Struct.new(:row_id, :scheduled_time, :cron, :delay, :timezone)
+      class Token < Struct.new(:row_id, :scheduled_time, :cron, :delay, :timezone, :data)
       end
 
       def initialize(client, config)
@@ -60,8 +60,8 @@ module PerfectSched
             next_time INT NOT NULL,
             cron VARCHAR(128) NOT NULL,
             delay INT NOT NULL,
-            data BLOB NOT NULL,
             timezone VARCHAR(256) NULL,
+            data BLOB NOT NULL,
             PRIMARY KEY (id)
           );]
         connect {
@@ -71,7 +71,7 @@ module PerfectSched
 
       def get_schedule_metadata(key, options={})
         connect {
-          row = @db.fetch("SELECT id, timeout, next_time, cron, delay, data, timezone FROM `#{@table}` WHERE id=? LIMIT 1", key).first
+          row = @db.fetch("SELECT id, timeout, next_time, cron, delay, timezone, data FROM `#{@table}` WHERE id=? LIMIT 1", key).first
           unless row
             raise NotFoundError, "schedule key=#{key} does not exist"
           end
@@ -82,7 +82,7 @@ module PerfectSched
 
       def list(options, &block)
         connect {
-          @db.fetch("SELECT id, timeout, next_time, cron, delay, data, timezone FROM `#{@table}` ORDER BY timeout ASC") {|row|
+          @db.fetch("SELECT id, timeout, next_time, cron, delay, timezone, data FROM `#{@table}` ORDER BY timeout ASC") {|row|
             attributes = create_attributes(row)
             sched = ScheduleWithMetadata.new(@client, row[:id], attributes)
             yield sched
@@ -90,12 +90,11 @@ module PerfectSched
         }
       end
 
-      def add(key, type, cron, delay, timezone, data, next_time, next_run_time, options)
-        data = data ? data.dup : {}
-        data['type'] = type
+      def add(key, cron, delay, timezone, next_time, next_run_time, options)
+        data = options[:data] || {}
         connect {
           begin
-            n = @db["INSERT INTO `#{@table}` (id, timeout, next_time, cron, delay, data, timezone) VALUES (?, ?, ?, ?, ?, ?, ?);", key, next_run_time, next_time, cron, delay, data.to_json, timezone].insert
+            n = @db["INSERT INTO `#{@table}` (id, timeout, next_time, cron, delay, timezone, data) VALUES (?, ?, ?, ?, ?, ?, ?)", key, next_run_time, next_time, cron, delay, timezone, data.to_json].insert
             return Schedule.new(@client, key)
           rescue Sequel::DatabaseError
             raise IdempotentAlreadyExistsError, "schedule key=#{key} already exists"
@@ -105,7 +104,7 @@ module PerfectSched
 
       def delete(key, options)
         connect {
-          n = @db["DELETE FROM `#{@table}` WHERE id=?;", key].delete
+          n = @db["DELETE FROM `#{@table}` WHERE id=?", key].delete
           if n <= 0
             raise IdempotentNotFoundError, "schedule key=#{key} does no exist"
           end
@@ -116,10 +115,15 @@ module PerfectSched
         ks = []
         vs = []
         [:cron, :delay, :timezone].each {|k|
-          # TODO type and data are not supported
           if v = options[k]
             ks << k
             vs << v
+          end
+        }
+        [:data].each {|k|
+          if v = options[k]
+            ks << k
+            vs << v.to_json
           end
         }
         return nil if ks.empty?
@@ -142,17 +146,29 @@ module PerfectSched
       def acquire(alive_time, max_acquire, options)
         now = (options[:now] || Time.now).to_i
         next_timeout = now + alive_time
+        only_keys = options[:only_keys]
+
+        select_sql = "SELECT id, timeout, next_time, cron, delay, timezone, data FROM `#{@table}` WHERE timeout <= ?"
+        select_params = [select_sql, now]
+        if only_keys
+          select_sql << " AND id IN ("
+          select_sql << only_keys.map {|k|
+            select_params << k
+            '?'
+          }.join(', ')
+          select_sql << ')'
+        end
+        select_sql << " ORDER BY timeout ASC LIMIT #{MAX_SELECT_ROW}"
 
         connect {
           while true
             rows = 0
-            @db.fetch("SELECT id, timeout, next_time, cron, delay, data, timezone FROM `#{@table}` WHERE timeout <= ? ORDER BY timeout ASC LIMIT #{MAX_SELECT_ROW};", now) {|row|
-
-              n = @db["UPDATE `#{@table}` SET timeout=? WHERE id=? AND timeout=?;", next_timeout, row[:id], row[:timeout]].update
+            @db.fetch(*select_params) {|row|
+              n = @db["UPDATE `#{@table}` SET timeout=? WHERE id=? AND timeout=?", next_timeout, row[:id], row[:timeout]].update
               if n > 0
                 scheduled_time = row[:next_time]
                 attributes = create_attributes(row)
-                task_token = Token.new(row[:id], row[:next_time], attributes[:cron], attributes[:delay], attributes[:timezone])
+                task_token = Token.new(row[:id], row[:next_time], attributes[:cron], attributes[:delay], attributes[:timezone], attributes[:data].dup)
                 task = Task.new(@client, row[:id], attributes, scheduled_time, task_token)
                 return [task]
               end
@@ -173,7 +189,7 @@ module PerfectSched
         next_run_time = now + alive_time
 
         connect {
-          n = @db["UPDATE `#{@table}` SET timeout=? WHERE id=? AND next_time=?;", next_run_time, row_id, scheduled_time].update
+          n = @db["UPDATE `#{@table}` SET timeout=? WHERE id=? AND next_time=?", next_run_time, row_id, scheduled_time].update
           if n <= 0  # TODO fix
             row = @db.fetch("SELECT id, timeout, next_time FROM `#{@table}` WHERE id=? AND next_time=? LIMIT 1", row_id, scheduled_time).first
             if row == nil
@@ -192,9 +208,20 @@ module PerfectSched
         scheduled_time = task_token.scheduled_time
         next_time = PerfectSched.next_time(task_token.cron, scheduled_time, task_token.timezone)
         next_run_time = next_time + task_token.delay
+        update_data = options[:update_data]
+
+        update_sql = "UPDATE `#{@table}` SET timeout=?, next_time=?"
+        update_params = [update_sql, next_run_time, next_time]
+        if update_data
+          new_data = task_token.data.merge(update_data)
+          update_sql << ", data=?"
+          update_params << new_data.to_json
+        end
+        update_sql << " WHERE id=? AND next_time=?"
+        update_params << row_id << scheduled_time
 
         connect {
-          n = @db["UPDATE `#{@table}` SET timeout=?, next_time=? WHERE id=? AND next_time=?;", next_run_time, next_time, row_id, scheduled_time].update
+          n = @db[*update_params].update
           if n <= 0
             raise IdempotentAlreadyFinishedError, "task time=#{Time.at(scheduled_time).utc} is already finished"
           end
@@ -245,11 +272,6 @@ module PerfectSched
           end
         end
 
-        type = data.delete('type')
-        if type == nil || type.empty?
-          type = row[:id].split(/\./, 2)[0]
-        end
-
         attributes = {
           :timezone => timezone,
           :delay => delay,
@@ -257,9 +279,7 @@ module PerfectSched
           :data => data,
           :next_time => next_time,
           :next_run_time => next_run_time,
-          :type => type,
-          :message => nil,  # not supported
-          :node => nil,  # not supported
+          #:node => nil,  # not supported
         }
       end
 

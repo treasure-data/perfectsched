@@ -7,7 +7,7 @@ op.banner += %[ <command>
 
 commands:
     list                             Show list of registered schedules
-    add <key> <type> <cron> <data>   Register a new schedule
+    add <key> <cron> <data>          Register a new schedule
     delete <key>                     Delete a registered schedule
     run <class>                      Run a worker process
     init                             Initialize a backend database
@@ -91,8 +91,8 @@ begin
 
   when 'add'
     cmd = :add
-    usage nil unless ARGV.length == 4
-    key, type, cron, data = *ARGV
+    usage nil unless ARGV.length == 3
+    key, cron, data = *ARGV
     require 'json'
     data = JSON.load(data)
 
@@ -130,11 +130,11 @@ when :list
   n = 0
   PerfectSched.open(config_load_proc.call) {|scheds|
     format = "%30s %15s %18s %7s %11s %28s %28s  %s"
-    puts format % ['key', 'type', 'cron', 'delay', 'timezone', 'next_time', 'next_run_time', 'data']
+    puts format % ['key', 'cron', 'delay', 'timezone', 'next_time', 'next_run_time', 'data']
     scheds.list {|sched|
       next_time = sched.next_time ? Time.at(sched.next_time) : sched.next_time
       next_run_time = sched.next_run_time ? Time.at(sched.next_run_time) : sched.next_run_time
-      puts format % [sched.key, sched.type, sched.cron, sched.delay, sched.timezone, next_time, next_run_time, sched.data]
+      puts format % [sched.key, sched.cron, sched.delay, sched.timezone, next_time, next_run_time, sched.data]
       n += 1
     }
   }
@@ -149,7 +149,7 @@ when :add
   PerfectSched.open(config_load_proc.call) {|scheds|
     add_options[:cron] = cron
     add_options[:data] = data
-    scheds.add(key, type, add_options)
+    scheds.add(key, add_options)
   }
 
 when :run

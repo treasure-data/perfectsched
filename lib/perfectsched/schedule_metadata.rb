@@ -21,10 +21,6 @@ module PerfectSched
   module ScheduleMetadataAccessors
     attr_reader :attributes
 
-    def type
-      @attributes[:type]
-    end
-
     def data
       @attributes[:data]
     end
@@ -52,10 +48,6 @@ module PerfectSched
     alias scheduled_time next_time
 
     alias scheduled_run_time next_run_time
-
-    def message
-      @attributes[:message]
-    end
   end
 
   class ScheduleMetadata
