@@ -56,6 +56,7 @@ module PerfectSched
     def initialize(client, key, attributes)
       super(client)
       @key = key
+      @attributes = attributes
     end
 
     def schedule
