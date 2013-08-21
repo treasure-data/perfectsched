@@ -55,12 +55,12 @@ module PerfectSched
       def init_database(options)
         sql = %[
           CREATE TABLE IF NOT EXISTS `#{@table}` (
-            id VARCHAR(256) NOT NULL,
+            id VARCHAR(256) character set ascii NOT NULL,
             timeout INT NOT NULL,
             next_time INT NOT NULL,
-            cron VARCHAR(128) NOT NULL,
+            cron VARCHAR(128) character set ascii NOT NULL,
             delay INT NOT NULL,
-            timezone VARCHAR(256) NULL,
+            timezone VARCHAR(256) character set ascii NULL,
             data BLOB NOT NULL,
             PRIMARY KEY (id)
           );]
