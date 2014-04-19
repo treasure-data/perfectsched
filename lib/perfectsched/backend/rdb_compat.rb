@@ -40,7 +40,28 @@ module PerfectSched
 
         #password = config[:password]
         #user = config[:user]
-        @db = Sequel.connect(url, :max_connections=>1)
+
+        case url.split('//',2)[0].to_s
+        when /sqlite/i
+          @db = Sequel.connect(url, :max_connections=>1)
+        when /mysql/i
+          require 'uri'
+
+          uri = URI.parse(url)
+          options = {
+            user: uri.user,
+            password: uri.password,
+            host: uri.host,
+            port: uri.port ? uri.port.to_i : 3306
+          }
+          options[:sslca] = config[:sslca] if config[:sslca]
+
+          db_name = uri.path.split('/')[1]
+          @db = Sequel.mysql2(db_name, options)
+        else
+          raise ConfigError, "'sqlite' and 'mysql' are supported"
+        end
+
         @mutex = Mutex.new
 
         connect {
