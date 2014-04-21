@@ -1,4 +1,8 @@
 
+== 2014-04-21 version 0.8.6
+
+* Added SSL support for MySQL backend
+
 == 2012-12-12 version 0.8.5
 
 * show version when worker starts
