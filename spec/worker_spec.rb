@@ -18,7 +18,7 @@ class TestHandler < PerfectSched::Application::Base
 end
 
 class TestApp < PerfectSched::Application::Dispatch
-  route 'key' => TestHandler
+  route 'test' => TestHandler
 end
 
 describe Worker do
@@ -43,7 +43,7 @@ describe Worker do
 
   it 'run' do
     TestHandler.any_instance.should_receive(:run).once
-    add('key', {:cron=>'* * * * *', :next_time=>Time.now.to_i-60})
+    add('key', 'test', {:cron=>'* * * * *', :next_time=>Time.now.to_i-60})
     sleep 2
   end
 

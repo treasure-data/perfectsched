@@ -1,7 +1,7 @@
 #
 # PerfectSched
 #
-# Copyright (C) 2012-2013 Sadayuki Furuhashi
+# Copyright (C) 2012 FURUHASHI Sadayuki
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -35,19 +35,19 @@ module PerfectSched
     end
 
     def run
-      @log.info "PerfectSched #{VERSION}"
-
-      install_signal_handlers
-
-      @engine = Engine.new(@runner, load_config)
+      @sig = install_signal_handlers
       begin
-        until @finished
-          @engine.run
+        @engine = Engine.new(@runner, load_config)
+        begin
+          until @finished
+            @engine.run
+          end
+        ensure
+          @engine.shutdown
         end
       ensure
-        @engine.shutdown
+        @sig.shutdown
       end
-
       return nil
     rescue
       @log.error "#{$!.class}: #{$!}"

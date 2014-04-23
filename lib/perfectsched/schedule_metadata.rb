@@ -1,7 +1,7 @@
 #
 # PerfectSched
 #
-# Copyright (C) 2012-2013 Sadayuki Furuhashi
+# Copyright (C) 2012 FURUHASHI Sadayuki
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -20,6 +20,10 @@ module PerfectSched
 
   module ScheduleMetadataAccessors
     attr_reader :attributes
+
+    def type
+      @attributes[:type]
+    end
 
     def data
       @attributes[:data]
@@ -48,6 +52,10 @@ module PerfectSched
     alias scheduled_time next_time
 
     alias scheduled_run_time next_run_time
+
+    def message
+      @attributes[:message]
+    end
   end
 
   class ScheduleMetadata
@@ -56,7 +64,6 @@ module PerfectSched
     def initialize(client, key, attributes)
       super(client)
       @key = key
-      @attributes = attributes
     end
 
     def schedule

@@ -1,7 +1,7 @@
 #
 # PerfectSched
 #
-# Copyright (C) 2012-2013 Sadayuki Furuhashi
+# Copyright (C) 2012 FURUHASHI Sadayuki
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -47,13 +47,14 @@ module PerfectSched
     # :data
     # :delay => 0
     # :timezone => UTC
-    def add(key, options={})
+    def add(key, type, options={})
       cron = options[:cron]
 
       raise ArgumentError, ":cron option is required" unless cron
 
       delay = options[:delay] || 0
       timezone = options[:timezone] || @timezone
+      data = options[:data] || {}
 
       next_time = options[:next_time] || Time.now.to_i
       next_time = PerfectSched.cron_time(cron, next_time.to_i, timezone)
@@ -65,7 +66,7 @@ module PerfectSched
         next_run_time = next_time + delay
       end
 
-      @backend.add(key, cron, delay, timezone, next_time, next_run_time, options)
+      @backend.add(key, type, cron, delay, timezone, data, next_time, next_run_time, options)
 
       # TODO return value
       return next_time, next_run_time

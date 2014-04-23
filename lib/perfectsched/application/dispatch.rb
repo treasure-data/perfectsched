@@ -1,7 +1,7 @@
 #
 # PerfectSched
 #
-# Copyright (C) 2012-2013 Sadayuki Furuhashi
+# Copyright (C) 2012 FURUHASHI Sadayuki
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -22,10 +22,10 @@ module PerfectSched
     class Dispatch < Runner
       # Runner interface
       def initialize(task)
-        base = self.class.router.route(task.key)
+        base = self.class.router.route(task.type)
         unless base
-          task.retry!  # TODO or release?
-          raise "Unknown task key #{task.key.inspect}"   # TODO error class
+          task.retry!
+          raise "Unknown task type #{task.type.inspect}"   # TODO error class
         end
         @runner = base.new(task)
         super

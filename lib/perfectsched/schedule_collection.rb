@@ -1,7 +1,7 @@
 #
 # PerfectSched
 #
-# Copyright (C) 2012-2013 Sadayuki Furuhashi
+# Copyright (C) 2012 FURUHASHI Sadayuki
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -49,8 +49,8 @@ module PerfectSched
     # :data => Hash
     # :cron
     # :timezone
-    def add(key, options={})
-      @client.add(key, options)
+    def add(key, type, options={})
+      @client.add(key, type, options)
     end
 
     def close

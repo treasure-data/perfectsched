@@ -1,7 +1,7 @@
 #
 # PerfectSched
 #
-# Copyright (C) 2012-2013 Sadayuki Furuhashi
+# Copyright (C) 2012 FURUHASHI Sadayuki
 #
 #    Licensed under the Apache License, Version 2.0 (the "License");
 #    you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ module PerfectSched
         begin
           m = method(type)
         rescue NameError
-          raise UndefinedDecisionError, "Undefined decision #{type} options=#{opts.inspect}"
+          raise UndefinedDecisionError, "Undefined decision #{type} options=#{opt.inspect}"
         end
         m.call(opts)
       end

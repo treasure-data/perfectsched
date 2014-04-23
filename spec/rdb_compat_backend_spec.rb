@@ -23,6 +23,7 @@ describe Backend::RDBCompatBackend do
     ts.should_not == nil
     t = ts[0]
     t.data.should == {'account_id'=>1}
+    t.type.should == 'maint_sched'
     t.key.should == 'maint_sched.1.do_hourly'
     t.next_time.should == 1339812000
   end
@@ -32,6 +33,7 @@ describe Backend::RDBCompatBackend do
     ts = backend.acquire(60, 1, {:now=>1339812060})
     t = ts[0]
     t.data.should == {}
+    t.type.should == 'merge'
     t.key.should == 'merge'
     t.next_time.should == 1339812000
   end
