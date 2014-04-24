@@ -1,4 +1,9 @@
 
+== 2012-02-21 version 0.7.12
+
+* RDBBackend: added MySQL's SSL support
+
+
 == 2012-02-21 version 0.7.10
 
 * Fixed NullBackend#modify_checked
