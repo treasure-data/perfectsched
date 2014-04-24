@@ -3,12 +3,24 @@ module PerfectSched
 
 
 class RDBBackend < Backend
-  def initialize(uri, table)
+  def initialize(uri, table, config)
     super()
     require 'sequel'
+    require 'uri'
     @uri = uri
     @table = table
-    @db = Sequel.connect(@uri)
+
+    u = URI.parse(url)
+    options = {
+      max_connections: 1,
+      user: u.user,
+      password: u.password,
+      host: u.host,
+      port: u.port ? u.port.to_i : 3306
+    }
+    options[:sslca] = config[:sslca] if config[:sslca]
+    @db = Sequel.mysql2(db_name, options)
+
     #init_db(@uri.split('//',2)[0])
     connect {
       # connection test
