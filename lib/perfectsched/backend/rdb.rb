@@ -3,7 +3,7 @@ module PerfectSched
 
 
 class RDBBackend < Backend
-  def initialize(uri, table, config)
+  def initialize(uri, table, config={})
     super()
     require 'sequel'
     require 'uri'
