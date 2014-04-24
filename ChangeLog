@@ -1,4 +1,8 @@
 
+== 2014-04-23 version 0.8.7
+
+* Reverted commits for 0.8.5 and applied commits for 0.8.6, in particular, added commit for MySQL's SSL support
+
 == 2014-04-21 version 0.8.6
 
 * Added SSL support for MySQL backend
