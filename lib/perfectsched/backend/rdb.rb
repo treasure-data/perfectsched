@@ -10,7 +10,7 @@ class RDBBackend < Backend
     @uri = uri
     @table = table
 
-    u = URI.parse(url)
+    u = URI.parse(@uri)
     options = {
       max_connections: 1,
       user: u.user,
