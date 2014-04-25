@@ -19,6 +19,7 @@ class RDBBackend < Backend
       port: u.port ? u.port.to_i : 3306
     }
     options[:sslca] = config[:sslca] if config[:sslca]
+    db_name = u.path.split('/')[1]
     @db = Sequel.mysql2(db_name, options)
 
     #init_db(@uri.split('//',2)[0])
