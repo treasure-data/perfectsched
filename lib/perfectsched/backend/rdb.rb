@@ -119,17 +119,32 @@ class RDBBackend < Backend
       return nil
     }
   end
+  
+  # Overrides parent method in order to pass the calculated next run time into modify_checked
+  def modify(id, cron, delay, data, timezone)
+    cron = cron.strip
+    next_time = @croncalc.next_time(cron, Time.now.to_i/60*60, timezone)
+    modify_checked(id, cron, delay, data, timezone, next_time)
+  end
 
-  def modify_checked(id, cron, delay, data, timezone)
+  # Overrides parent method in order to pass the calculated next run time into modify_sched_checked
+  def modify_sched(id, cron, delay)
+    cron_, delay_, data_, timezone, next_time = get(id)
+    cron = cron.strip
+    next_time = @croncalc.next_time(cron, Time.now.to_i/60*60, timezone)
+    modify_sched_checked(id, cron, delay, next_time)
+  end
+
+  def modify_checked(id, cron, delay, data, timezone, next_time)
     connect {
-      n = @db["UPDATE `#{@table}` SET cron=?, delay=?, data=?, timezone=? WHERE id=?;", cron, delay, data, timezone, id].update
+      n = @db["UPDATE `#{@table}` SET cron=?, delay=?, data=?, timezone=?, next_time=?, timeout=? WHERE id=?;", cron, delay, data, timezone, next_time, next_time + delay, id].update
       return n > 0
     }
   end
 
-  def modify_sched_checked(id, cron, delay)
+  def modify_sched_checked(id, cron, delay, next_time)
     connect {
-      n = @db["UPDATE `#{@table}` SET cron=?, delay=? WHERE id=?;", cron, delay, id].update
+      n = @db["UPDATE `#{@table}` SET cron=?, delay=?, next_time=?, timeout=? WHERE id=?;", cron, delay, next_time, next_time + delay, id].update
       return n > 0
     }
   end
