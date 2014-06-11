@@ -125,6 +125,7 @@ class RDBBackend < Backend
     cron = cron.strip
     next_time = @croncalc.next_time(cron, Time.now.to_i/60*60, timezone)
     modify_checked(id, cron, delay, data, timezone, next_time)
+    return next_time, next_time + delay
   end
 
   # Overrides parent method in order to pass the calculated next run time into modify_sched_checked
@@ -133,6 +134,7 @@ class RDBBackend < Backend
     cron = cron.strip
     next_time = @croncalc.next_time(cron, Time.now.to_i/60*60, timezone)
     modify_sched_checked(id, cron, delay, next_time)
+    return next_time, next_time + delay
   end
 
   def modify_checked(id, cron, delay, data, timezone, next_time)
