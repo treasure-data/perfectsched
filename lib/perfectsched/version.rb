@@ -1,5 +1,5 @@
 module PerfectSched
 
-VERSION = '0.7.14'
+VERSION = '0.7.15'
 
 end

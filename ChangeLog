@@ -1,3 +1,8 @@
+== 2014-06-10 version 0.7.15
+
+* RDBBackend: fixed modify_checked to update timeout and next_time
+
+
 == 2014-04-25 version 0.7.14
 
 * RDBBackend: fixed undefined local variable: 'url' to '@uri'
