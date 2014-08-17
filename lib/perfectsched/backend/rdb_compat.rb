@@ -198,7 +198,7 @@ module PerfectSched
           if n <= 0  # TODO fix
             row = @db.fetch("SELECT id, timeout, next_time FROM `#{@table}` WHERE id=? AND next_time=? LIMIT 1", row_id, scheduled_time).first
             if row == nil
-              raise PreemptedError, "task key=#{key} does not exist or preempted."
+              raise PreemptedError, "task #{task_token.inspect} does not exist or preempted."
             elsif row[:timeout] == next_run_time
               # ok
             else
