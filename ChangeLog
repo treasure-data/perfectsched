@@ -1,4 +1,9 @@
 
+== 2014-10-08 version 0.8.8
+
+* Upgraded perfectqueue 0.8.40
+* Upgraded sequel 3.48.0
+
 == 2014-04-23 version 0.8.7
 
 * Reverted commits for 0.8.5 and applied commits for 0.8.6, in particular, added commit for MySQL's SSL support
