@@ -1,3 +1,9 @@
+== 2014-10-08 version 0.7.16
+
+* Upgraded perfectqueue v0.7.31
+* Upgraded sequel v3.48.0
+
+
 == 2014-06-10 version 0.7.15
 
 * RDBBackend: fixed modify_checked to update timeout and next_time
