@@ -39,18 +39,18 @@ Gem::Specification.new do |s|
 
     if Gem::Version.new(Gem::VERSION) >= Gem::Version.new('1.2.0') then
       s.add_runtime_dependency(%q<cron-spec>, ["<= 0.1.2", ">= 0.1.2"])
-      s.add_runtime_dependency(%q<sequel>, ["~> 3.26.0"])
+      s.add_runtime_dependency(%q<sequel>, [">= 3.26.0"])
       s.add_runtime_dependency(%q<perfectqueue>, ["~> 0.7.0"])
       s.add_runtime_dependency(%q<tzinfo>, [">= 0.3.29"])
     else
       s.add_dependency(%q<cron-spec>, ["<= 0.1.2", ">= 0.1.2"])
-      s.add_dependency(%q<sequel>, ["~> 3.26.0"])
+      s.add_dependency(%q<sequel>, [">= 3.26.0"])
       s.add_dependency(%q<perfectqueue>, ["~> 0.7.0"])
       s.add_dependency(%q<tzinfo>, [">= 0.3.29"])
     end
   else
     s.add_dependency(%q<cron-spec>, ["<= 0.1.2", ">= 0.1.2"])
-    s.add_dependency(%q<sequel>, ["~> 3.26.0"])
+    s.add_dependency(%q<sequel>, [">= 3.26.0"])
     s.add_dependency(%q<perfectqueue>, ["~> 0.7.0"])
     s.add_dependency(%q<tzinfo>, [">= 0.3.29"])
   end
