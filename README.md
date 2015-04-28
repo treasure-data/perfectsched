@@ -1,5 +1,7 @@
 # PerfectSched
 
+[![Build Status](https://travis-ci.org/treasure-data/perfectsched.svg?branch=master)](https://travis-ci.org/treasure-data/perfectsched)
+
 PerfectSched is a highly available distributed cron built on top of RDBMS.
 
 It provides at-least-once semantics; Even if a worker node fails during process a task, the task is retried by another worker.
