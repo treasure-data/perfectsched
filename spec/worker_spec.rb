@@ -47,5 +47,12 @@ describe Worker do
     sleep 2
   end
 
+  it 'term signal' do
+    sleep 1
+    Process.kill(:TERM, Process.pid)
+    puts "finish expected..."
+    @thread.join
+  end
+
 end
 

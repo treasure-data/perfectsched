@@ -18,9 +18,8 @@
 
 module PerfectSched
 
-  # SignalQueue is obsolete because it does not run with ruby >= 2.0.0.
-  require 'perfectqueue/signal_queue'
-  SignalQueue = PerfectQueue::SignalQueue
+  require 'perfectqueue/signal_thread'
+  SignalThread = PerfectQueue::SignalThread
 
 end
 

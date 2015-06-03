@@ -46,7 +46,7 @@ module PerfectSched
           @engine.shutdown
         end
       ensure
-        @sig.shutdown
+        @sig.stop
       end
       return nil
     rescue
@@ -130,28 +130,29 @@ module PerfectSched
     end
 
     def install_signal_handlers(&block)
-      SignalQueue.start do |sig|
-        sig.trap :TERM do
-          stop
+      s = self
+      SignalThread.new do |st|
+        st.trap :TERM do
+          s.stop
         end
-        sig.trap :INT do
-          stop
-        end
-
-        sig.trap :QUIT do
-          stop
+        st.trap :INT do
+          s.stop
         end
 
-        sig.trap :USR1 do
-          restart
+        st.trap :QUIT do
+          s.stop
         end
 
-        sig.trap :HUP do
-          restart
+        st.trap :USR1 do
+          s.restart
         end
 
-        sig.trap :USR2 do
-          logrotated
+        st.trap :HUP do
+          s.restart
+        end
+
+        st.trap :USR2 do
+          s.logrotated
         end
       end
     end

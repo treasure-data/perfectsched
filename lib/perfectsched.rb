@@ -35,7 +35,10 @@ module PerfectSched
     :ScheduleWithMetadata => 'perfectsched/schedule',
     :ScheduleMetadata => 'perfectsched/schedule_metadata',
     :ScheduleMetadataAccessors => 'perfectsched/schedule_metadata',
+    # SignalQueue is obsolete because it does not run with ruby >= 2.0.0.
+    # See ddbf04c9 and use SignalThread instead.
     :SignalQueue => 'perfectsched/signal_queue',
+    :SignalThread => 'perfectsched/signal_thread',
     :Task => 'perfectsched/task',
     :Worker => 'perfectsched/worker',
     :VERSION => 'perfectsched/version',
