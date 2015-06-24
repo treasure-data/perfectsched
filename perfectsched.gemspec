@@ -18,7 +18,7 @@ Gem::Specification.new do |gem|
 
   gem.add_dependency "cron-spec", [">= 0.1.2", "<= 0.1.2"]
   gem.add_dependency "sequel", "~> 3.48.0"
-  gem.add_dependency "tzinfo", "~> 0.3.29"
+  gem.add_dependency "tzinfo", "~> 1.1"
   gem.add_dependency "perfectqueue", "~> 0.8.41"
   gem.add_development_dependency "rake", "~> 0.9.2"
   gem.add_development_dependency "rspec", "~> 2.10.0"
