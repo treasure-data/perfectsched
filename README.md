@@ -85,7 +85,7 @@ PerfectSched.open(config) {|sc|
     :next_time => Time.parse('2013-01-01 00:00:00 +0900').to_i,
     :data => data,
   }
-  sc.submit("sched-id", "type1", options)
+  sc.add("sched-id", "type1", options)
 }
 ```
 
