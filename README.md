@@ -1,6 +1,7 @@
 # PerfectSched
 
 [![Build Status](https://travis-ci.org/treasure-data/perfectsched.svg?branch=master)](https://travis-ci.org/treasure-data/perfectsched)
+[![Coverage Status](https://coveralls.io/repos/treasure-data/perfectqueue/badge.svg?branch=master&service=github)](https://coveralls.io/github/treasure-data/perfectqueue?branch=master)
 
 PerfectSched is a highly available distributed cron built on top of RDBMS.
 
