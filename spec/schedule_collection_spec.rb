@@ -9,7 +9,7 @@ describe ScheduleCollection do
   end
 
   it 'is a ScheduleCollection' do
-    sc.class.should == PerfectSched::ScheduleCollection
+    expect(sc.class).to eq(PerfectSched::ScheduleCollection)
   end
 
   it 'succeess add' do
@@ -19,9 +19,9 @@ describe ScheduleCollection do
   it 'fail duplicated add' do
     sc.add('sched01', 't01', {:cron=>'* * * * *', :timezone=>'UTC'})
 
-    lambda {
+    expect {
       sc.add('sched01', 't01', {:cron=>'* * * * *', :timezone=>'UTC'})
-    }.should raise_error AlreadyExistsError
+    }.to raise_error AlreadyExistsError
 
     sc['sched01'].delete!
 
@@ -34,25 +34,25 @@ describe ScheduleCollection do
     s01 = sc.add('sched01', 't01', :cron=>"* * * * *", :data=>{'k'=>1}, :next_time=>time)
 
     t01 = sc.poll(:alive_time=>120, :now=>time)
-    t01.key.should == 'sched01'
-    t01.type.should == 't01'
-    t01.cron.should == "* * * * *"
-    t01.delay.should == 0
-    t01.data.should == {'k'=>1}
-    t01.scheduled_time.should == time
+    expect(t01.key).to eq('sched01')
+    expect(t01.type).to eq('t01')
+    expect(t01.cron).to eq("* * * * *")
+    expect(t01.delay).to eq(0)
+    expect(t01.data).to eq({'k'=>1})
+    expect(t01.scheduled_time).to eq(time)
 
     t02 = sc.poll(:alive_time=>120, :now=>time+60)
-    t02.should == nil
+    expect(t02).to eq(nil)
 
     t01.finish!
 
     t04 = sc.poll(:alive_time=>120, :now=>time+60)
-    t04.key.should == 'sched01'
-    t01.type.should == 't01'
-    t04.cron.should == "* * * * *"
-    t04.delay.should == 0
-    t04.data.should == {'k'=>1}
-    t04.scheduled_time.should == time+60
+    expect(t04.key).to eq('sched01')
+    expect(t01.type).to eq('t01')
+    expect(t04.cron).to eq("* * * * *")
+    expect(t04.delay).to eq(0)
+    expect(t04.data).to eq({'k'=>1})
+    expect(t04.scheduled_time).to eq(time+60)
   end
 
   it 'timezone' do
@@ -67,16 +67,16 @@ describe ScheduleCollection do
     #s02.key.should == 'sched02'
 
     t01 = sc.poll(:alive_time=>86400, :now=>time)
-    t01.class.should == Task
-    t01.key.should == 'sched01'
-    t01.type.should == 't01'
-    t01.scheduled_time.should == time
+    expect(t01.class).to eq(Task)
+    expect(t01.key).to eq('sched01')
+    expect(t01.type).to eq('t01')
+    expect(t01.scheduled_time).to eq(time)
 
     t02 = sc.poll(:alive_time=>86400, :now=>time+54000)
-    t02.class.should == Task
-    t02.key.should == 'sched02'
-    t02.type.should == 't01'
-    t02.scheduled_time.should == time+54000
+    expect(t02.class).to eq(Task)
+    expect(t02.key).to eq('sched02')
+    expect(t02.type).to eq('t01')
+    expect(t02.scheduled_time).to eq(time+54000)
   end
 
   it 'delay' do
@@ -85,43 +85,43 @@ describe ScheduleCollection do
     s01 = sc.add('sched01', 't01', :cron=>"0 * * * *", :delay=>30, :next_time=>time, :timezone=>'UTC')
 
     t01 = sc.poll(:alive_time=>86400, :now=>time)
-    t01.should == nil
+    expect(t01).to eq(nil)
 
     t02 = sc.poll(:alive_time=>86400, :now=>time+30)
-    t02.class.should == Task
-    t02.key.should == 'sched01'
-    t02.type.should == 't01'
-    t02.scheduled_time.should == time
-    t02.delay.should == 30
+    expect(t02.class).to eq(Task)
+    expect(t02.key).to eq('sched01')
+    expect(t02.type).to eq('t01')
+    expect(t02.scheduled_time).to eq(time)
+    expect(t02.delay).to eq(30)
 
     t02.finish!
 
     t03 = sc.poll(:alive_time=>86400, :now=>time+3600)
-    t03.should == nil
+    expect(t03).to eq(nil)
 
     t04 = sc.poll(:alive_time=>86400, :now=>time+3630)
-    t04.class.should == Task
-    t04.key.should == 'sched01'
-    t04.type.should == 't01'
-    t04.scheduled_time.should == time+3600
-    t04.delay.should == 30
+    expect(t04.class).to eq(Task)
+    expect(t04.key).to eq('sched01')
+    expect(t04.type).to eq('t01')
+    expect(t04.scheduled_time).to eq(time+3600)
+    expect(t04.delay).to eq(30)
   end
 
   it 'invalid cron format' do
-    lambda {
+    expect {
       sc.add('sched01', 't01', :cron=>'???')
-    }.should raise_error ArgumentError
+    }.to raise_error ArgumentError
 
-    lambda {
+    expect {
       sc.add('sched01', 't01', :cron=>'* * * * * *')
-    }.should raise_error ArgumentError
+    }.to raise_error ArgumentError
   end
 
   it 'fail duplicated add' do
     sc.add('sched01', 't01', :cron=>"0 * * * *")
-    lambda {
+    expect {
       sc.add('sched01', 't01', :cron=>"0 * * * *")
-    }.should raise_error AlreadyExistsError
+    }.to raise_error AlreadyExistsError
 
     sc['sched01'].delete!
 
@@ -142,31 +142,31 @@ describe ScheduleCollection do
     a.sort_by! {|s| s.key }
 
     s01 = a.shift
-    s01.class.should == ScheduleWithMetadata
-    s01.key.should == 'sched01'
-    s01.type.should == 't01'
-    s01.cron.should == '0 * * * *'
-    s01.delay.should == 1
-    s01.next_time.should == time
-    s01.next_run_time.should == time+1
+    expect(s01.class).to eq(ScheduleWithMetadata)
+    expect(s01.key).to eq('sched01')
+    expect(s01.type).to eq('t01')
+    expect(s01.cron).to eq('0 * * * *')
+    expect(s01.delay).to eq(1)
+    expect(s01.next_time).to eq(time)
+    expect(s01.next_run_time).to eq(time+1)
 
     s02 = a.shift
-    s02.class.should == ScheduleWithMetadata
-    s02.key.should == 'sched02'
-    s02.type.should == 't02'
-    s02.cron.should == '0 * * * *'
-    s02.delay.should == 2
-    s02.next_time.should == time
-    s02.next_run_time.should == time+2
+    expect(s02.class).to eq(ScheduleWithMetadata)
+    expect(s02.key).to eq('sched02')
+    expect(s02.type).to eq('t02')
+    expect(s02.cron).to eq('0 * * * *')
+    expect(s02.delay).to eq(2)
+    expect(s02.next_time).to eq(time)
+    expect(s02.next_run_time).to eq(time+2)
 
     s03 = a.shift
-    s03.class.should == ScheduleWithMetadata
-    s03.key.should == 'sched03'
-    s03.type.should == 't03'
-    s03.cron.should == '0 * * * *'
-    s03.delay.should == 3
-    s03.next_time.should == time
-    s03.next_run_time.should == time+3600
+    expect(s03.class).to eq(ScheduleWithMetadata)
+    expect(s03.key).to eq('sched03')
+    expect(s03.type).to eq('t03')
+    expect(s03.cron).to eq('0 * * * *')
+    expect(s03.delay).to eq(3)
+    expect(s03.next_time).to eq(time)
+    expect(s03.next_run_time).to eq(time+3600)
   end
 end
 

@@ -42,7 +42,7 @@ describe Worker do
   end
 
   it 'run' do
-    TestHandler.any_instance.should_receive(:run).once
+    expect_any_instance_of(TestHandler).to receive(:run).once
     add('key', 'test', {:cron=>'* * * * *', :next_time=>Time.now.to_i-60})
     sleep 2
   end
