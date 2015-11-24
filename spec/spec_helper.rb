@@ -1,7 +1,5 @@
 $LOAD_PATH.unshift(File.expand_path('../lib', File.dirname(__FILE__)))
 
-require 'perfectsched'
-
 if ENV['SIMPLE_COV']
   require 'simplecov'
   SimpleCov.start do
@@ -10,6 +8,8 @@ if ENV['SIMPLE_COV']
     add_filter 'vendor/'
   end
 end
+
+require 'perfectsched'
 
 if ENV['CI']
   require 'coveralls'
