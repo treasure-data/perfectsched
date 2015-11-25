@@ -20,6 +20,7 @@ module PerfectSched
   module Backend
     class RDBCompatBackend
       include BackendHelper
+      MAX_RETRY = 10
 
       class Token < Struct.new(:row_id, :scheduled_time, :cron, :delay, :timezone)
       end
