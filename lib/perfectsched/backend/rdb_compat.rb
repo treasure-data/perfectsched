@@ -77,13 +77,13 @@ module PerfectSched
       def init_database(options)
         sql = %[
           CREATE TABLE IF NOT EXISTS `#{@table}` (
-            id VARCHAR(256) NOT NULL,
+            id VARCHAR(255) NOT NULL,
             timeout INT NOT NULL,
             next_time INT NOT NULL,
             cron VARCHAR(128) NOT NULL,
             delay INT NOT NULL,
             data BLOB NOT NULL,
-            timezone VARCHAR(256) NULL,
+            timezone VARCHAR(255) NULL,
             PRIMARY KEY (id)
           );]
         connect {
