@@ -24,4 +24,5 @@ Gem::Specification.new do |gem|
   gem.add_development_dependency "rspec", "~> 3.4.0"
   gem.add_development_dependency "simplecov", "~> 0.10.0"
   gem.add_development_dependency "sqlite3", "~> 1.3.3"
+  gem.add_development_dependency "mysql2", "~> 0.3.20"
 end
