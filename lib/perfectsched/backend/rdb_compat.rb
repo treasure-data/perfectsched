@@ -98,7 +98,7 @@ module PerfectSched
             raise NotFoundError, "schedule key=#{key} does not exist"
           end
           attributes = create_attributes(row)
-          return ScheduleMetadata.new(@client, key, attributes)
+          return ScheduleWithMetadata.new(@client, key, attributes)
         }
       end
 

@@ -57,24 +57,4 @@ module PerfectSched
       @attributes[:message]
     end
   end
-
-  class ScheduleMetadata
-    include Model
-
-    def initialize(client, key, attributes)
-      super(client)
-      @key = key
-    end
-
-    def schedule
-      Schedule.new(@client, @key)
-    end
-
-    def inspect
-      "#<#{self.class} @key=#{@key.inspect} @attributes=#{@attributes.inspect}>"
-    end
-
-    include ScheduleMetadataAccessors
-  end
-
 end

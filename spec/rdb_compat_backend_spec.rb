@@ -85,7 +85,7 @@ describe Backend::RDBCompatBackend do
       db.add('key', 'test', '* * * * *', 0, 'Asia/Tokyo', {}, now, now, {})
     end
     it 'fetches a metadata' do
-      expect(db.get_schedule_metadata('key')).to be_an_instance_of(ScheduleMetadata)
+      expect(db.get_schedule_metadata('key')).to be_an_instance_of(ScheduleWithMetadata)
     end
     it 'raises error if non exist key' do
       expect{db.get_schedule_metadata('nonexistent')}.to raise_error(NotFoundError)
