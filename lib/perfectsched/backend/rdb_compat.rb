@@ -82,7 +82,7 @@ module PerfectSched
             next_time INT NOT NULL,
             cron VARCHAR(128) NOT NULL,
             delay INT NOT NULL,
-            data BLOB NOT NULL,
+            data LONGBLOB NOT NULL,
             timezone VARCHAR(255) NULL,
             PRIMARY KEY (id)
           );]
