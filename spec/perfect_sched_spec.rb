@@ -47,5 +47,20 @@ describe PerfectSched do
     it do
       expect{PerfectSched.next_time('0 * * * *', 0, 'JST-9')}.to raise_error(ArgumentError)
     end
+
+    context 'DST 2015' do
+      it 'can go through America/Los_Angeles transition' do
+        t0 = Time.new(2015,  3,  8,  1, 59, 59, -8*3600)
+        t1 = Time.new(2015,  3,  9,  2,  0,  0, -7*3600) # 2015-03-08T02:00:00 doesn't exist
+        ts = PerfectSched.next_time('* 2 * * *', t0.to_i, 'America/Los_Angeles')
+        expect(ts).to eq(t1.to_i)
+      end
+      it 'can go through America/Los_Angeles transition' do
+        t0 = Time.new(2015, 11,  1,  1,  0,  0, -7*3600)
+        t1 = Time.new(2015, 11,  1,  1,  0,  0, -8*3600) # 2015-11-01T01:00:00 exists twice
+        ts = PerfectSched.next_time('0 1 * * *', t0.to_i, 'America/Los_Angeles')
+        expect(ts).to eq(t1.to_i)
+      end
+    end
   end
 end
