@@ -88,10 +88,7 @@ module PerfectSched
       begin
         return if @replaced_pid
         stop
-        @replaced_pid = Process.fork do
-          exec(*command)
-          exit!(127)
-        end
+        @replaced_pid = Process.spawn(*command)
       rescue
         @log.error "failed to replace: #{$!}"
         $!.backtrace.each {|bt| @log.warn "\t#{bt}" }

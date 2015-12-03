@@ -20,6 +20,7 @@ module PerfectSched
   module Backend
     class RDBCompatBackend
       include BackendHelper
+      MAX_RETRY = 10
 
       class Token < Struct.new(:row_id, :scheduled_time, :cron, :delay, :timezone)
       end
@@ -76,13 +77,13 @@ module PerfectSched
       def init_database(options)
         sql = %[
           CREATE TABLE IF NOT EXISTS `#{@table}` (
-            id VARCHAR(256) NOT NULL,
+            id VARCHAR(255) NOT NULL,
             timeout INT NOT NULL,
             next_time INT NOT NULL,
             cron VARCHAR(128) NOT NULL,
             delay INT NOT NULL,
-            data BLOB NOT NULL,
-            timezone VARCHAR(256) NULL,
+            data LONGBLOB NOT NULL,
+            timezone VARCHAR(255) NULL,
             PRIMARY KEY (id)
           );]
         connect {
@@ -97,7 +98,7 @@ module PerfectSched
             raise NotFoundError, "schedule key=#{key} does not exist"
           end
           attributes = create_attributes(row)
-          return ScheduleMetadata.new(@client, key, attributes)
+          return ScheduleWithMetadata.new(@client, key, attributes)
         }
       end
 
