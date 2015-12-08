@@ -110,11 +110,11 @@ describe ScheduleCollection do
   it 'invalid cron format' do
     expect {
       sc.add('sched01', 't01', :cron=>'???')
-    }.to raise_error ArgumentError
+    }.to raise_error StandardError
 
     expect {
       sc.add('sched01', 't01', :cron=>'* * * * * *')
-    }.to raise_error ArgumentError
+    }.to raise_error StandardError
   end
 
   it 'fail duplicated add' do

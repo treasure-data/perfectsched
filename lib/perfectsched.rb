@@ -52,7 +52,7 @@ module PerfectSched
     require File.expand_path(v, File.dirname(__FILE__))
   }
 
-  require 'cron-spec'
+  require 'chrono'
   require 'tzinfo'
 
   def self.open(config, &block)
@@ -71,28 +71,9 @@ module PerfectSched
   end
 
   def self.cron_time(cron, timestamp, timezone)
-    begin
-      tab = CronSpec::CronSpecification.new(cron)
-    rescue
-      raise ArgumentError, "invalid cron format: #{$!}: #{cron.inspect}"
-    end
-
-    begin
-      tz = TZInfo::Timezone.get(timezone) if timezone
-    rescue
-      raise ArgumentError, "unknown timezone: #{$!}: #{timezone.inspect}"
-    end
-
-    ts = (timestamp + 59) / 60 * 60
-    while true
-      t = Time.at(ts).utc
-      t = tz.utc_to_local(t) if tz
-      if tab.is_specification_in_effect?(t)
-        return ts
-      end
-      ts += 60
-      # FIXME break
-    end
+    ts = timestamp - 1 # compatibility
+    t = Time.find_zone!(timezone || 'UTC'.freeze).at(ts)
+    Chrono::NextTime.new(now: t, source: cron).to_time.to_i
   end
 
   def self.next_time(cron, before_timestamp, timezone)
