@@ -16,7 +16,7 @@ Gem::Specification.new do |gem|
   gem.executables = `git ls-files -- bin/*`.split("\n").map{ |f| File.basename(f) }
   gem.require_paths = ['lib']
 
-  gem.add_dependency "cron-spec", [">= 0.1.2", "<= 0.1.2"]
+  gem.add_dependency "chrono", "~> 0.2.0"
   gem.add_dependency "sequel", "~> 3.48.0"
   gem.add_dependency "tzinfo", "~> 1.1"
   gem.add_dependency "perfectqueue", "~> 0.8.41"
