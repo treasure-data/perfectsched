@@ -14,8 +14,8 @@ begin
     gemspec.require_paths = ["lib"]
     gemspec.add_dependency "cron-spec", [">= 0.1.2", "<= 0.1.2"]
     gemspec.add_dependency "sequel", "~> 3.48.0"
-    gemspec.add_dependency "perfectqueue", "~> 0.7.31"
-    gemspec.add_dependency "tzinfo", "~> 0.3.29"
+    gemspec.add_dependency "perfectqueue", "~> 0.8.48"
+    gemspec.add_dependency "tzinfo", "~> 1.2.2"
     gemspec.test_files = Dir["test/**/*.rb", "test/**/*.sh"]
     gemspec.files = Dir["bin/**/*", "lib/**/*"]
     gemspec.executables = ['perfectsched']
