@@ -1,3 +1,9 @@
+== 2016-09-18 version 0.8.11
+
+* allow perfectqueue v0.9.x
+* drop ruby 2.0 support
+* use chrono instead of cron-spec
+* explicitly specify development dependency rspec, simplecov and mysql
 
 == 2015-06-29 version 0.8.10
 
