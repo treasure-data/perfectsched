@@ -19,52 +19,106 @@
 module PerfectSched
 
   class Engine
+    require_relative "./multiprocess/fork_processor"
+    require_relative "./multiprocess/thread_processor"
+    require_relative "./multiprocess/child_process"
+    require_relative "./multiprocess/child_process_monitor"
+    require_relative "./task_monitor"
+
     def initialize(runner, config)
       @runner = runner
 
-      @poll_interval = config[:poll_interval] || 1.0
-      @log = config[:logger] || Logger.new(STDERR)
-
-      @running_flag = BlockingFlag.new
       @finish_flag = BlockingFlag.new
 
-      @scheds = PerfectSched.open(config)
+      # processor_type = config[:processor_type] || :process
+      # case processor_type.to_sym
+      #   when :process
+      #     @processor_class = Multiprocess::ForkProcessor
+      #   when :thread
+      #     @processor_class = Multiprocess::ThreadProcessor
+      #   else
+      #     raise ConfigError, "Unknown processor_type: #{config[:processor_type].inspect}"
+      # end
+      @processor_class = Multiprocess::ForkProcessor
+
+      @processors = []
+      restart(false, config)
     end
 
-    def run
-      @running_flag.set_region do
-        until @finish_flag.set?
-          task = @scheds.poll
-          if task
-            r = @runner.new(task)
-            r.run
-          else
-            @finish_flag.wait(@poll_interval)
-          end
+    attr_reader :processors
+
+    def restart(immediate, config)
+      return nil if @finish_flag.set?
+
+      # TODO connection check
+
+      @log = config[:logger] || Logger.new(STDERR)
+
+      num_processors = config[:processors] || 1
+
+      # scaling
+      extra = num_processors - @processors.length
+      if extra > 0
+        extra.times do
+          @processors << @processor_class.new(@runner, @processors.size+1, config)
         end
+      elsif extra < 0
+        (-extra).times do
+          c = @processors.shift
+          c.stop(immediate)
+          c.join
+        end
+        extra = 0
       end
+
+      @processors[0..(-extra-1)].each {|c|
+        c.restart(immediate, config)
+      }
+
+      @child_keepalive_interval = (config[:child_keepalive_interval] || config[:child_heartbeat_interval] || 2).to_i
+
       self
     end
 
-    def stop
+    def run
+      @processors.each {|c|
+        c.keepalive
+        # add wait time before starting processors to avoid
+        # a spike of the number of concurrent connections.
+        sleep rand*2  # upto 2 second, average 1 seoncd
+      }
+      until @finish_flag.set?
+        @processors.each {|c| c.keepalive }
+        @finish_flag.wait(@child_keepalive_interval)
+      end
+      join
+    end
+
+    def stop(immediate)
+      @processors.each {|c| c.stop(immediate) }
       @finish_flag.set!
       self
     end
 
     def join
-      @running_flag.wait while @running_flag.set?
+      @processors.each {|c| c.join }
       self
     end
 
-    def close
-      @scheds.close
-      self
-    end
-
-    def shutdown
-      stop
+    def shutdown(immediate)
+      stop(immediate)
       join
-      close
+    end
+
+    def replace(immediate, command=[$0]+ARGV)
+      return if @replaced_pid
+      stop(immediate)
+      @replaced_pid = Process.spawn(*command)
+      self
+    end
+
+    def logrotated
+      @processors.each {|c| c.logrotated }
     end
   end
 

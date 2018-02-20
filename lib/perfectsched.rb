@@ -40,6 +40,7 @@ module PerfectSched
     :SignalQueue => 'perfectsched/signal_queue',
     :SignalThread => 'perfectsched/signal_thread',
     :Task => 'perfectsched/task',
+    :TaskMonitor => 'perfectsched/task_monitor',
     :Worker => 'perfectsched/worker',
     :VERSION => 'perfectsched/version',
   }.each_pair {|k,v|

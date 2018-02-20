@@ -56,4 +56,13 @@ module PerfectSched
   class IdempotentNotFoundError < NotFoundError
     include IdempotentError
   end
+
+  class ProcessStopError < RuntimeError
+  end
+
+  class ImmediateProcessStopError < ProcessStopError
+  end
+
+  class GracefulProcessStopError < ProcessStopError
+  end
 end
